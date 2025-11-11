@@ -1,40 +1,28 @@
 # 注：该MOD目前在开发中，大部分功能暂时缺失！
 
+众所周知，现有的AI大多无法操控我们的电脑玩游戏，那么有没办法打破这一障碍呢？  
+`LynxMind`或许可以实现这一愿望，它能够让LLM间接操控我们的Minecraft角色完成玩家所给的任务！  
+
 # LynxMind
 
-LynxMind 是一个基于 Fabric 框架开发的 Minecraft 模组，专注于提供智能化的游戏辅助功能，提升玩家的游戏体验。
+LynxMind 是一个基于 Fabric 框架开发的 Minecraft 模组，专注利用特定通信协议让AI返回指定Json内容，   
+通过反序列化返回的内容即可调用Baritone API的相关功能，从而实现对MC角色的“控制”。
 
 
 ## 项目信息
 
 - **模组ID**：lynx_mind
-- **版本**：0,1-beta
+- **版本**：beta
 - **支持的 Minecraft 版本**：1.20.4（定义于 gradle.properties）
 
 ## 功能特点
 
-- **AI 服务集成**：通过 `AIServiceManager` 实现与外部 AI 服务的交互，支持消息发送与异步回复处理
-- **配置管理系统**：
-  - 由 `ConfigManager` 负责配置文件的加载、保存，支持 YAML 格式，自动创建父目录
-  - `AIServiceConfig` 专门管理 AI 服务相关配置（如 API 地址、令牌等），提供 `save()` 方法快速保存配置
-- **数据生成支持**：实现 `LynxMindDataGenerator` 集成 Fabric 数据生成系统，用于处理模组数据生成逻辑
-- **模块化入口**：基于 Fabric 入口点机制，分别实现客户端（`LynxMindClient`）与服务端（`LynxMind`）初始化逻辑
-
+- **AI 服务集成**：通过 `AIServiceManager` 利用特定协议实现与 AI 服务的交互。（需自建AI API服务）
 
 ## 依赖项
 
 - **核心依赖**：
-  - Minecraft: ${minecraft_version}
-  - Yarn Mappings: ${yarn_mappings}
-  - Fabric Loader: >=${loader_version}
-  - Fabric API: ${fabric_version}
-- **第三方库**：
   - Baritone API（fabric 适配版本，通过本地 libs 目录引入）
-  - SnakeYAML 2.2（配置文件处理）
-  - Jackson Databind 2.15.3（JSON 处理）
-  - Nether Pathfinder 1.4.1
-  - Lombok 1.18.42（注解处理，需启用注解处理器）
-
 
 ## 构建与运行
 
