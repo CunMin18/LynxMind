@@ -36,6 +36,10 @@ repositories {
     flatDir {
         dirs 'libs'
     }
+    maven {
+        name = 'babbaj-repo'
+        url = 'https://babbaj.github.io/maven/'
+    }
 }
 
 dependencies {
@@ -45,8 +49,11 @@ dependencies {
     modImplementation "net.fabricmc:fabric-loader:${project.loader_version}"
     modImplementation "net.fabricmc.fabric-api:fabric-api:${project.fabric_version}"
     modImplementation  name: 'baritone-api-fabric-1.10.4'
-    implementation 'com.volcengine:volcengine-java-sdk-ark-runtime:0.2.44'
     implementation 'org.yaml:snakeyaml:2.2'
+    implementation 'com.fasterxml.jackson.core:jackson-databind:2.15.3'
+    implementation "dev.babbaj:nether-pathfinder:1.4.1"
+    compileOnly 'org.projectlombok:lombok:1.18.42'
+    annotationProcessor 'org.projectlombok:lombok:1.18.42'
 }
 
 processResources {

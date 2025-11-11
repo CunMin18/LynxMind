@@ -1,4 +1,4 @@
-package org.ricey_yam.lynxmind.utils;
+package org.ricey_yam.lynxmind.client.utils;
 
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
@@ -37,11 +37,7 @@ public class JsonExt {
         if(jsonObject == null) {
             return null;
         }
-        var e = jsonObject.get(key);
-        if(e == null){
-            return null;
-        }
-        return e;
+        return jsonObject.get(key);
     }
 
     /// 从JSON获取元素并转为String

@@ -1,4 +1,4 @@
-package org.ricey_yam.lynxmind.config;
+package org.ricey_yam.lynxmind.client.config;
 
 import org.yaml.snakeyaml.DumperOptions;
 import org.yaml.snakeyaml.Yaml;
@@ -78,6 +78,6 @@ public class ConfigManager {
 
     /// 初始化（加载）全部配置文件
     public static void init(){
-        ArkServiceConfig.load();
+        AIServiceConfig.load();
     }
 }
