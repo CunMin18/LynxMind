@@ -48,8 +48,9 @@ public class BaritoneManager {
                     var isNeededBlock = false;
                     for(var item : bCT.getNeededItem()){
                         if(item == null) continue;
-                        if(item.getItem_name().equals(bCT.getMiningBlockName())){
+                        if (item.getItem_name().equals(bCT.getMiningBlockName())) {
                             isNeededBlock = true;
+                            break;
                         }
                     }
 
@@ -67,7 +68,7 @@ public class BaritoneManager {
         return new BStatus();
     }
 
-    public static void stopAllTasks() {
-        BEndTickEventManager.cleanAllTasks();
+    public static void stopAllTasks(String reason) {
+        BEndTickEventManager.cleanAllTasks(reason);
     }
 }

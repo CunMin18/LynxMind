@@ -28,9 +28,43 @@ public class AIServiceManager {
     @Getter
     private static String currentTask = "";
 
+
+    /// AI服务是否处于开启状态
+    public static boolean isServiceActive;
+
+    /// 开启AI服务
+    public static void openServiceAsync() {
+        /// 关闭先前的服务
+        closeServiceAsync();
+
+        ChatManager.sendStartMessageToAIAndReceiveReply().whenComplete((reply, throwable) -> {
+            if(throwable != null){
+                System.out.println("连接AI服务时异常" + throwable.getMessage());
+            }
+            else{
+                ChatManager.handleAIReply(reply);
+            }
+        });
+    }
+
+    /// 关闭AI服务
+    public static void closeServiceAsync() {
+        if(isServiceActive) {
+            LynxMindClient.sendModMessage("已关闭AI服务！");
+        }
+        isServiceActive = false;
+        chatMessages.clear();
+        stopTask("AI服务已关闭！");
+    }
+
     /// 发送消息并接收回复
     public static CompletableFuture<String> sendAndReceiveReplyAsync(String message){
         var aiServiceConfig = AIServiceConfig.getInstance();
+
+        if(!isServiceActive && !chatMessages.isEmpty()){
+            return CompletableFuture.completedFuture("");
+        }
+
         /// 构造用户消息
         var chatMessage = new ChatMessage("user",message);
         chatMessages.add(chatMessage);
@@ -84,10 +118,9 @@ public class AIServiceManager {
     }
 
     /// 停止当前任务
-    public static void stopTask(){
+    public static void stopTask(String reason){
         currentTask = "";
-        chatMessages.clear();
-        BaritoneManager.stopAllTasks();
+        BaritoneManager.stopAllTasks(reason);
     }
 }
 @Getter

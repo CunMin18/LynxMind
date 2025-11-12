@@ -11,14 +11,4 @@ public class Action {
     public boolean invoke(){
         return true;
     }
-
-    protected void stopAllActions() {
-        var baritone = BaritoneManager.getClientBaritone();
-        if(baritone != null){
-            BaritoneManager.stopAllTasks();
-        }
-        else{
-            System.out.println("baritone is null");
-        }
-    }
 }

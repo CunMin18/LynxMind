@@ -25,7 +25,7 @@ public class PlayerMoveAction extends Action {
     public boolean invoke() {
         try {
             /// 先停下其他动作
-            stopAllActions();
+            BEndTickEventManager.unregisterTask(1,"取消其他自带寻路的Task");
             /// 创建寻路任务
             var newPathingTask = new BPathingTask(x, y, z);
             BEndTickEventManager.registerTask(newPathingTask);
