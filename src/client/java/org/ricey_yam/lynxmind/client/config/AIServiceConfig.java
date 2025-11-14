@@ -18,6 +18,7 @@ public class AIServiceConfig {
     private String api_url;
     private String model;
     private String token;
+    private boolean pseudo_continuous_dialogue;
 
     /// 保存配置文件
     public static void save(){

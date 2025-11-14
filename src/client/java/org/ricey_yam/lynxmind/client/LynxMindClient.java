@@ -4,7 +4,7 @@ import lombok.Getter;
 import net.fabricmc.api.ClientModInitializer;
 import net.minecraft.text.Text;
 import org.ricey_yam.lynxmind.client.baritone.BaritoneManager;
-import org.ricey_yam.lynxmind.client.baritone.BEndTickEventManager;
+import org.ricey_yam.lynxmind.client.event.LynxMindEndTickEventManager;
 import org.ricey_yam.lynxmind.client.command.ModCommand;
 import org.ricey_yam.lynxmind.client.config.ConfigManager;
 
@@ -17,7 +17,7 @@ public class LynxMindClient implements ClientModInitializer {
         ConfigManager.init();
 
         /// 初始化Baritone任务管理器
-        BEndTickEventManager.init();
+        LynxMindEndTickEventManager.init();
 
         /// 注册命令
         ModCommand.registerCommands();

@@ -9,11 +9,13 @@ import lombok.Setter;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.network.ClientPlayerEntity;
 import org.ricey_yam.lynxmind.client.baritone.status.child.BFindingNeededBlocks;
-import org.ricey_yam.lynxmind.client.baritone.task.BCollectionTask;
+import org.ricey_yam.lynxmind.client.event.LynxMindEndTickEventManager;
+import org.ricey_yam.lynxmind.client.task.baritone.BCollectionTask;
 import org.ricey_yam.lynxmind.client.baritone.status.BStatus;
 import org.ricey_yam.lynxmind.client.baritone.status.child.BMiningStatus;
 import org.ricey_yam.lynxmind.client.baritone.status.child.BPathingToGoalStatus;
 import org.ricey_yam.lynxmind.client.baritone.status.child.BPathingToGoalXZStatus;
+import org.ricey_yam.lynxmind.client.task.baritone.BTaskType;
 
 @Getter
 @Setter
@@ -32,7 +34,7 @@ public class BaritoneManager {
     public static BStatus getCurrentBStatus() {
         var baritone = getClientBaritone();
         var pathingGoal = baritone.getPathingBehavior().getGoal();
-        var collectingTask = BEndTickEventManager.getTask(1);
+        var collectingTask = LynxMindEndTickEventManager.getTask(BTaskType.COLLECTION);
         if(pathingGoal != null){
             if(pathingGoal instanceof GoalBlock goalBlock){
                 return new BPathingToGoalStatus(goalBlock);
@@ -69,6 +71,6 @@ public class BaritoneManager {
     }
 
     public static void stopAllTasks(String reason) {
-        BEndTickEventManager.cleanAllTasks(reason);
+        LynxMindEndTickEventManager.cleanAllTasks(reason);
     }
 }
