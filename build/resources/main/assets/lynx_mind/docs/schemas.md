@@ -140,18 +140,27 @@ LynxMind 项目的 JSON Schema 定义与事件规范。这份文档详细说明�
       "inventory":
       [
         {        
-          "item_name": "minecraft:diamond",
-          "mining_block_name": 33
+          "item_stack": {
+            "item_name": "minecraft:diamond",
+            "mining_block_name": 33
+          },
+          "slot_id": 0
         },
         {        
-          "item_name": "minecraft:apple",
-          "mining_block_name": 5
+          "item_stack": {
+            "item_name": "minecraft:apple",
+            "mining_block_name": 5
+          },
+          "slot_id": 1
         },
         {        
-          "item_name": "minecraft:iron_ingot",
-          "mining_block_name": 4
-        },
-      ],
+          "item_stack": {
+            "item_name": "minecraft:iron_ingot",
+            "mining_block_name": 6
+          },
+          "slot_id": 2
+        }
+      ]
       //...
     }
     ```
