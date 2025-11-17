@@ -1,6 +1,7 @@
 package org.ricey_yam.lynxmind.client.utils.game_ext.slot;
 
 import net.minecraft.screen.slot.Slot;
+import org.ricey_yam.lynxmind.client.utils.game_ext.interaction.ComplexContainerType;
 
 /// LSlot ID Range: 0-8
 ///
@@ -10,18 +11,19 @@ public class InventoryHotBarSlot extends LSlot {
         super();
         this.slotType = LSlotType.INVENTORY_HOTBAR;
     }
-    public InventoryHotBarSlot(int id,boolean inComplexContainer) {
-        super(id,inComplexContainer);
+    public InventoryHotBarSlot(int id, ComplexContainerType complexContainerType) {
+        super(id,complexContainerType);
         this.slotType = LSlotType.INVENTORY_HOTBAR;
     }
     @Override
     public Slot toSlot() {
-        return SlotHelper.getSlot(id + 37);
+        return SlotHelper.getSlot(id + 27 + SlotHelper.getOffsetFromLSlotToSlot(complexContainerType));
     }
 
     @Override
-    public LSlot toLSlot(Slot slot,boolean inComplexContainer) {
-        this.id = slot.id - 37;
+    public LSlot toLSlot(Slot slot,ComplexContainerType complexContainerType) {
+        this.complexContainerType = complexContainerType;
+        this.id = slot.id - 27 - SlotHelper.getOffsetFromLSlotToSlot(complexContainerType);
         return this;
     }
 }
