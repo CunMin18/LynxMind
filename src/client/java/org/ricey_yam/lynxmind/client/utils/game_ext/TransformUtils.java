@@ -1,11 +1,8 @@
 package org.ricey_yam.lynxmind.client.utils.game_ext;
 
 import baritone.api.utils.Rotation;
-import baritone.api.utils.VecUtils;
-import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Vec3d;
-import org.ricey_yam.lynxmind.client.baritone.BaritoneManager;
 
 public class TransformUtils {
     /**
@@ -23,14 +20,7 @@ public class TransformUtils {
         return yaw;
     }
 
-    /// 计算旋转角度
-    public static Rotation calcLookRotationFromVec3d(PlayerEntity player, BlockPos to) {
-        var vec3dForm = player.getEyePos();
-        var vec3dTo = VecUtils.getBlockPosCenter(to);
-        return getRotation(vec3dForm, vec3dTo);
-    }
-
-    private static Rotation getRotation(Vec3d vec3dForm, Vec3d vec3dTo) {
+    public static Rotation getRotation(Vec3d vec3dForm, Vec3d vec3dTo) {
         var diff = vec3dTo.subtract(vec3dForm);
         var distance = diff.length();
         var xzDistance = Math.sqrt(diff.x * diff.x + diff.z * diff.z);
@@ -41,29 +31,11 @@ public class TransformUtils {
         return new Rotation(yaw, pitch).normalize();
     }
 
-    /// 是否玩家看向某个位置
-    public static boolean isLookingAt(BlockPos pos) {
-        var baritone = BaritoneManager.getClientBaritone();
-        if (baritone == null) return false;
-
-        var ctx = baritone.getPlayerContext();
-
-        var player = ctx.player();
-
-        Vec3d eyePosition = player.getEyePos();
-
-        Vec3d targetCenter = VecUtils.getBlockPosCenter(pos);
-
-        Rotation idealRotation = getRotation(eyePosition, targetCenter);
-
-        Rotation currentRotation = ctx.playerRotations();
-
-        double yawDiff = Math.abs(normalizeYaw180(idealRotation.getYaw() - currentRotation.getYaw()));
-        double pitchDiff = Math.abs(idealRotation.getPitch() - currentRotation.getPitch());
-
-        double totalDiff = Math.sqrt(yawDiff * yawDiff + pitchDiff * pitchDiff);
-
-        return totalDiff < 4D;
+    public static float getDistance(BlockPos pos1, BlockPos pos2) {
+        var x = pos1.getX() - pos2.getX();
+        var y = pos1.getY() - pos2.getY();
+        var z = pos1.getZ() - pos2.getZ();
+        return (float) Math.sqrt(x * x + y * y + z * z);
     }
 
 }

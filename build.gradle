@@ -48,7 +48,7 @@ dependencies {
     mappings "net.fabricmc:yarn:${project.yarn_mappings}:v2"
     modImplementation "net.fabricmc:fabric-loader:${project.loader_version}"
     modImplementation "net.fabricmc.fabric-api:fabric-api:${project.fabric_version}"
-    modImplementation  name: 'baritone-api-fabric-1.10.4'
+    modImplementation  name: 'baritone-api-fabric-1.10.2'
     implementation 'org.yaml:snakeyaml:2.2'
     implementation 'com.fasterxml.jackson.core:jackson-databind:2.15.3'
     implementation "dev.babbaj:nether-pathfinder:1.4.1"

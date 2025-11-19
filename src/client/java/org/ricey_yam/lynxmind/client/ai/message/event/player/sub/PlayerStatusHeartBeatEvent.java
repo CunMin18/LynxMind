@@ -8,6 +8,7 @@ import org.ricey_yam.lynxmind.client.baritone.BaritoneManager;
 import org.ricey_yam.lynxmind.client.ai.message.event.player.PlayerEvent;
 import org.ricey_yam.lynxmind.client.ai.message.event.player.PlayerEventType;
 import org.ricey_yam.lynxmind.client.baritone.status.BStatus;
+import org.ricey_yam.lynxmind.client.utils.game_ext.entity.PlayerUtils;
 import org.ricey_yam.lynxmind.client.utils.game_ext.interaction.ComplexContainerType;
 import org.ricey_yam.lynxmind.client.utils.game_ext.item.ItemUtils;
 import org.ricey_yam.lynxmind.client.utils.game_ext.TransformUtils;
@@ -54,9 +55,9 @@ public class PlayerStatusHeartBeatEvent extends PlayerEvent {
         this.yaw = TransformUtils.normalizeYaw180(player.getHeadYaw());
         this.pitch = player.getPitch();
 
-        this.inventory_hotbar = ItemUtils.getClientPlayerInventoryItems(LSlotType.INVENTORY_HOTBAR, ComplexContainerType.PLAYER_INFO);
-        this.inventory_inner =  ItemUtils.getClientPlayerInventoryItems(LSlotType.INVENTORY_INNER,ComplexContainerType.PLAYER_INFO);
-        this.inventory_equipment = ItemUtils.getClientPlayerInventoryItems(LSlotType.INVENTORY_EQUIPMENT,ComplexContainerType.PLAYER_INFO);
+        this.inventory_hotbar = PlayerUtils.getClientPlayerInventoryItems(LSlotType.INVENTORY_HOTBAR, ComplexContainerType.PLAYER_INFO);
+        this.inventory_inner =  PlayerUtils.getClientPlayerInventoryItems(LSlotType.INVENTORY_INNER,ComplexContainerType.PLAYER_INFO);
+        this.inventory_equipment = PlayerUtils.getClientPlayerInventoryItems(LSlotType.INVENTORY_EQUIPMENT,ComplexContainerType.PLAYER_INFO);
 
         current_baritone_task = BaritoneManager.getCurrentBStatus();
     }

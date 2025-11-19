@@ -12,7 +12,7 @@ import org.ricey_yam.lynxmind.client.LynxMindClient;
 import org.ricey_yam.lynxmind.client.ai.AIServiceManager;
 import org.ricey_yam.lynxmind.client.ai.ChatManager;
 import org.ricey_yam.lynxmind.client.ai.LynxJsonHandler;
-import org.ricey_yam.lynxmind.client.ai.message.action.sub.PlayerCreateItemAction;
+import org.ricey_yam.lynxmind.client.ai.message.action.sub.PlayerCraftingAction;
 import org.ricey_yam.lynxmind.client.ai.message.game_info.item.ItemStackLite;
 import org.ricey_yam.lynxmind.client.baritone.BaritoneManager;
 import org.ricey_yam.lynxmind.client.config.AIServiceConfig;
@@ -204,7 +204,7 @@ public class LynxMindCommand {
                 for(var i : item_id_list){
                     collectingPlan.add(new ItemStackLite(count,i));
                 }
-                var newCreateAction = new PlayerCreateItemAction(collectingPlan);
+                var newCreateAction = new PlayerCraftingAction(collectingPlan);
                 newCreateAction.invoke();
                 return 1;
             }

@@ -1,9 +1,15 @@
 package org.ricey_yam.lynxmind.client.task.baritone;
 
 import baritone.api.IBaritone;
+import baritone.api.pathing.goals.GoalBlock;
+import baritone.api.pathing.goals.GoalNear;
+import baritone.api.utils.RotationUtils;
 import lombok.Getter;
 import lombok.Setter;
-import net.minecraft.block.Block;
+import net.minecraft.client.MinecraftClient;
+import net.minecraft.client.gui.screen.ingame.InventoryScreen;
+import net.minecraft.entity.ItemEntity;
+import net.minecraft.screen.slot.SlotActionType;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.World;
 import org.ricey_yam.lynxmind.client.LynxMindClient;
@@ -14,8 +20,21 @@ import org.ricey_yam.lynxmind.client.ai.message.action.Action;
 import org.ricey_yam.lynxmind.client.ai.message.event.player.sub.PlayerBaritoneTaskStop;
 import org.ricey_yam.lynxmind.client.ai.message.game_info.item.ItemStackLite;
 import org.ricey_yam.lynxmind.client.baritone.BaritoneManager;
+import org.ricey_yam.lynxmind.client.event.LynxMindEndTickEventManager;
+import org.ricey_yam.lynxmind.client.task.ui.UClickSlotTask;
+import org.ricey_yam.lynxmind.client.task.ui.UTask;
 import org.ricey_yam.lynxmind.client.utils.game_ext.BlockUtils;
+import org.ricey_yam.lynxmind.client.utils.game_ext.ClientUtils;
+import org.ricey_yam.lynxmind.client.utils.game_ext.EntityUtils;
+import org.ricey_yam.lynxmind.client.utils.game_ext.TransformUtils;
+import org.ricey_yam.lynxmind.client.utils.game_ext.entity.PlayerUtils;
+import org.ricey_yam.lynxmind.client.utils.game_ext.interaction.ComplexContainerType;
+import org.ricey_yam.lynxmind.client.utils.game_ext.interaction.ContainerHelper;
+import org.ricey_yam.lynxmind.client.utils.game_ext.item.ItemTagHelper;
 import org.ricey_yam.lynxmind.client.utils.game_ext.item.ItemUtils;
+import org.ricey_yam.lynxmind.client.utils.game_ext.slot.InventoryHotBarSlot;
+import org.ricey_yam.lynxmind.client.utils.game_ext.slot.LSlotType;
+import org.ricey_yam.lynxmind.client.utils.game_ext.slot.SlotHelper;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -25,8 +44,12 @@ import java.util.Objects;
 @Setter
 public class BCollectionTask extends BTask {
     private final IBaritone baritone;
+    private List<String> targetBlockIDList = new ArrayList<>();
     /// 当前目标方块位置
-    private BlockPos currentTarget;
+    private BlockPos currentTargetBlockPos;
+    private List<BlockPos> blackList = new ArrayList<>();
+    /// 发现的掉落物位置
+    private ItemEntity currentLootTarget;
     /// 当前玩家世界
     private World currentWorld;
     /// 状态
@@ -38,10 +61,16 @@ public class BCollectionTask extends BTask {
     /// 正在挖掘的方块位置
     private BlockPos miningBlockPos;
     /// 重新寻找次数
-    private int refindCount;
+    private int re_pathTicks;
+
+    private boolean toolInHotbar;
+    private List<UTask> switchingToolUTasks = new ArrayList<>();
+    private UTask performingSwitchUTask;
 
     public enum CollectingState {
+        MOVING_TO_LOOT,
         MOVING_TO_BLOCK,
+        SWITCHING_TOOL,
         MINING_BLOCK,
     }
 
@@ -57,63 +86,29 @@ public class BCollectionTask extends BTask {
 
     @Override
     public void start() {
-        if (!currentTaskState.equals(TaskState.IDLE)) return;
         if (neededItem.isEmpty() || currentWorld == null) {
             stop(currentWorld == null ? "玩家处于未知世界" : "需要收集的物品为空...");
             return;
         }
 
         nextBlock();
-        if (currentTarget == null) {
-            System.out.println("未找到目标方块，正在重新寻找...");
-            if(refindCount < 4){
-                new Thread(() -> {
-                    refindCount++;
-                    try {
-                        Thread.sleep(1000);
-                        start();
-                    }
-                    catch (InterruptedException e) {
-                        Thread.currentThread().interrupt();
-                    }
-                }).start();
-            }
-            else stop("附近没有目标方块，已自动取消BTASK！");
-            return;
-        }
-        else{
-            refindCount = 0;
-        }
-
-        if (baritone.getGetToBlockProcess() == null) {
-            System.out.println("GetToBlockProcess 未初始化，重试");
-            new Thread(() -> {
-                try {
-                    Thread.sleep(500);
-                    start();
-                }
-                catch (InterruptedException e) {
-                    Thread.currentThread().interrupt();
-                }
-            }).start();
-            return;
-        }
-
+        blackList.clear();
         currentTaskState = TaskState.IDLE;
         collectingState = CollectingState.MOVING_TO_BLOCK;
-        Block startBlock = getTargetBlock(currentTarget);
-        if (startBlock == null) {
-            System.out.println("启动时目标方块为空，重新寻找");
-            nextBlock();
-            start();
-            return;
-        }
-        baritone.getGetToBlockProcess().getToBlock(startBlock);
+        updateBlockTargetList();
     }
 
     @Override
     public void tick() {
         try{
+            var player = ClientUtils.getPlayer();
+
+            /// 先检查任务状态是否正常
+            if (currentTaskState != TaskState.IDLE) {
+                stop("任务状态不对！");
+                return;
+            }
+
             /// 如果没有收集的东西 就完成任务
             if(neededItem.isEmpty()) {
                 LynxMindClient.sendModMessage("收集任务已完成！");
@@ -121,52 +116,132 @@ public class BCollectionTask extends BTask {
                 return;
             }
 
-            if (currentTaskState != TaskState.IDLE || currentTarget == null || baritone.getGetToBlockProcess() == null) {
-                if(currentTarget == null && refindCount < 4) {
-                    new Thread(() -> {
-                        try {
-                            refindCount++;
-                            Thread.sleep(500);
-                            nextBlock();
-                        }
-                        catch (InterruptedException e) {
-                            Thread.currentThread().interrupt();
-                        }
-                    }).start();
-                    return;
-                }
+            /// 检查目标是否正常
+            if(currentTargetBlockPos == null){
+                nextBlock();
                 return;
             }
-            else refindCount = 0;
 
-            tickTimer++;
-            var targetBlockState = BlockUtils.getBlockState(currentTarget);
-            var targetBlock = getTargetBlock(currentTarget);
-            if (collectingState == CollectingState.MOVING_TO_BLOCK) {
-                if (targetBlock == null) {
-                    nextBlock();
-                }
-                else {
-                    if (isPlayerNearBlock(currentTarget)) {
-                        miningBlockName = BlockUtils.getBlockName(currentTarget);
-                        miningBlockPos = currentTarget;
+            switch(collectingState) {
+                /// 寻路到方块
+                case MOVING_TO_BLOCK -> {
+                    /// 寻找是否有需要的物品的掉落物
+                    var nearestLootEntity = EntityUtils.findNearestEntity(player,ItemEntity.class,15);
+                    if(nearestLootEntity != null && nearestLootEntity.getStack().getCount() > 0) {
+                        var distanceToLoot = nearestLootEntity.distanceTo(player);
+                        var distanceToTargetBlock = TransformUtils.getDistance(player.getBlockPos(),currentTargetBlockPos);
+                        if(distanceToLoot < distanceToTargetBlock && nearestLootEntity.isOnGround()){
+                            cancelMining();
+                            var targetStack = nearestLootEntity.getStack();
+                            var isNeededItem = false;
+                            for (int i = neededItem.size() - 1; i >= 0; i--) {
+                                var nItem = neededItem.get(i);
+                                if (ItemTagHelper.isFuzzyMatch(nItem.getItem_name(),ItemUtils.getItemName(targetStack)) && nItem.getCount() >= 0) {
+                                    isNeededItem = true;
+                                    break;
+                                }
+                            }
+                            if(isNeededItem) {
+                                currentLootTarget = nearestLootEntity;
+                                collectingState = CollectingState.MOVING_TO_LOOT;
+                                return;
+                            }
+                            else {
+                                currentLootTarget = null;
+                            }
+                        }
+                    }
+
+                    //System.out.println("moving update");
+                    cancelMining();
+                    if (isPlayerReachBlock(currentTargetBlockPos) || isPlayerNearBlock(currentTargetBlockPos)) {
                         collectingState = CollectingState.MINING_BLOCK;
-                        baritone.getMineProcess().mine(targetBlock);
+                        System.out.println("change to mining block");
+                    }
+                    else if(!baritone.getCustomGoalProcess().isActive()){
+                        if(re_pathTicks <= 100){
+                            baritone.getCustomGoalProcess().setGoalAndPath(new GoalNear(currentTargetBlockPos,2));
+                            re_pathTicks++;
+                        }
+                        else{
+                            blackList.add(currentTargetBlockPos);
+                            re_pathTicks = 0;
+                            currentTargetBlockPos = null;
+                            System.out.println("黑名单!!!");
+                        }
+                    }
+                }
+
+                /// 移动到掉落物
+                case MOVING_TO_LOOT -> {
+                    if(currentLootTarget != null && currentLootTarget.getStack().getCount() > 0){
+                        var newGoal = new GoalBlock(currentLootTarget.getBlockPos());
+                        baritone.getCustomGoalProcess().setGoalAndPath(newGoal);
                     }
                     else{
-                        baritone.getGetToBlockProcess().getToBlock(targetBlock);
+                        baritone.getCustomGoalProcess().setGoal(null);
+                        baritone.getPathingBehavior().cancelEverything();
+                        collectingState = CollectingState.MOVING_TO_BLOCK;
                     }
                 }
-            }
-            else if (collectingState == CollectingState.MINING_BLOCK) {
-                if (isBlockGone(currentTarget) || targetBlock == null || currentTarget == null) {
-                    nextBlock();
+
+                /// 切换到合适的工具
+                case SWITCHING_TOOL -> {
+                    cancelMining();
+                    if(ContainerHelper.isContainerOpen(InventoryScreen.class)) {
+                        if(switchingToolUTasks != null && !switchingToolUTasks.isEmpty()){
+                            switchingToolUTasks.removeIf(uTask -> uTask.getCurrentTaskState() != TaskState.IDLE);
+                            /// 若当前无操作，进行下一步操作
+                            if(performingSwitchUTask == null){
+                                performingSwitchUTask = switchingToolUTasks.get(0);
+                                LynxMindEndTickEventManager.registerTask(performingSwitchUTask);
+                            }
+                            /// 若当前有操作，判断操作结果，来决定是否下一步
+                            else if(performingSwitchUTask.getResult() != UTask.UTaskResult.NONE){
+                                switch (performingSwitchUTask.getResult()) {
+                                    /// 成功：继续下一个操作
+                                    case SUCCESS -> performingSwitchUTask = null;
+                                }
+                            }
+                        }
+                        else{
+                            collectingState = CollectingState.MINING_BLOCK;
+                            switchToBestTool();
+                        }
+                        /// 若没有操作 说明挖掘工具已移动完成
+                    }
+                    else {
+                        ContainerHelper.openContainer(InventoryScreen.class);
+                    }
                 }
-                else {
-                    baritone.getMineProcess().mine(targetBlock);
-                    miningBlockName = BlockUtils.getBlockName(currentTarget);
-                    miningBlockPos = currentTarget;
+
+                /// 挖掘方块
+                case MINING_BLOCK -> {
+                    System.out.println("mine update");
+
+                    /// 判断方块状态是否正常
+                    var targetBlock = BlockUtils.getTargetBlock(currentTargetBlockPos);
+                    if(targetBlock == null || targetBlock.getDefaultState().isAir()) {
+                        collectingState = CollectingState.MOVING_TO_BLOCK;
+                        currentTargetBlockPos = null;
+                        return;
+                    }
+
+                    if(baritone.getCustomGoalProcess().isActive()){
+                        baritone.getCustomGoalProcess().setGoal(null);
+                        baritone.getPathingBehavior().cancelEverything();
+                    }
+
+                    if (!isPlayerNearBlock(miningBlockPos)) {
+                        this.collectingState = CollectingState.MOVING_TO_BLOCK;
+                        System.out.println("change to moving");
+                    }
+
+                    if (currentTargetBlockPos != null) {
+                        mine(currentTargetBlockPos);
+                    }
                 }
+
             }
         }
         catch (Exception e){
@@ -174,20 +249,14 @@ public class BCollectionTask extends BTask {
             e.printStackTrace();
         }
     }
-
     @Override
     public void stop(String stopReason) {
-        if (baritone.getGetToBlockProcess() != null && baritone.getGetToBlockProcess().isActive()) {
-            baritone.getGetToBlockProcess().getToBlock(getTargetBlock(currentTarget));
-        }
-        if (baritone.getMineProcess() != null && baritone.getMineProcess().isActive()) {
-            baritone.getMineProcess().cancel();
-        }
         baritone.getCustomGoalProcess().setGoal(null);
         baritone.getPathingBehavior().cancelEverything();
+        cancelMining();
 
         neededItem.clear();
-        currentTarget = null;
+        currentTargetBlockPos = null;
         miningBlockPos = null;
         miningBlockName = "";
         collectingState = CollectingState.MOVING_TO_BLOCK;
@@ -205,9 +274,11 @@ public class BCollectionTask extends BTask {
 
     /// 更新收集任务
     public void onItemCollected(String itemName,int count){
+        if(neededItem.isEmpty()) return;
         for (int i = neededItem.size() - 1; i >= 0; i--) {
             var item = neededItem.get(i);
-            if (ItemUtils.ItemTagHelper.isFuzzyMatch(item.getItem_name(),itemName) && item.getCount() >= 0) {
+            if(item == null) continue;
+            if (ItemTagHelper.isFuzzyMatch(item.getItem_name(),itemName) && item.getCount() >= 0) {
                 item.setCount(item.getCount() - count);
                 if (item.getCount() <= 0) {
                     neededItem.remove(i);
@@ -215,54 +286,139 @@ public class BCollectionTask extends BTask {
                 return;
             }
         }
+        updateBlockTargetList();
     }
 
     /// 寻找下一个方块的位置
     private void nextBlock() {
-        try {
-            var blockNameList = new ArrayList<String>();
-            for(var item : neededItem){
-                blockNameList.add(item.getItem_name());
-            }
-            currentTarget = BlockUtils.findNearestBlock(baritone.getPlayerContext().player(), blockNameList, 80);
-            if (currentTarget != null && baritone.getGetToBlockProcess() != null) {
-                var targetBlock = getTargetBlock(currentTarget);
-                if(targetBlock != null){
-                    collectingState = CollectingState.MOVING_TO_BLOCK;
-                    baritone.getGetToBlockProcess().getToBlock(targetBlock);
-                    return;
-                }
-            }
-            new Thread(() -> {
-                try {
-                    Thread.sleep(1000);
-                    nextBlock();
-                }
-                catch (InterruptedException e) {
-                    Thread.currentThread().interrupt();
-                }
-            }).start();
+        cancelMining();
+        if(targetBlockIDList.isEmpty()){
+            updateBlockTargetList();
         }
-        catch (Exception e){
-            System.out.println("寻找下一个方块时，遇到错误：" + e.getMessage());
-            e.printStackTrace();
-        }
-    }
-
-    private Block getTargetBlock(BlockPos pos) {
-        if (pos == null) return null;
-        var state = BlockUtils.getBlockState(pos);
-        return state != null ? state.getBlock() : null;
+        currentTargetBlockPos = BlockUtils.findNearestBlock(baritone.getPlayerContext().player(), targetBlockIDList, 50,blackList);
     }
 
     private boolean isPlayerNearBlock(BlockPos pos) {
-        if (pos == null || baritone.getPlayerContext().player() == null) return false;
-        return baritone.getPlayerContext().player().getPos().distanceTo(pos.toCenterPos()) < 4D;
+        if (pos == null) return false;
+        var player = baritone.getPlayerContext().player();
+        double distSq = player.squaredDistanceTo(pos.getX() + 0.5, pos.getY() + 0.5, pos.getZ() + 0.5);
+        return distSq <= 14;
+    }
+
+    private boolean isPlayerReachBlock(BlockPos pos) {
+        if (pos == null) return false;
+        double maxReach = baritone.getPlayerContext().playerController().getBlockReachDistance();
+        return RotationUtils.reachable(baritone.getPlayerContext(), pos, maxReach, false).isPresent();
     }
 
     private boolean isBlockGone(BlockPos pos) {
         if (pos == null) return true;
         var state = BlockUtils.getBlockState(pos);
         return state == null || state.isAir();
+    }
+
+    private void updateBlockTargetList(){
+        targetBlockIDList.clear();
+        for(var item : neededItem){
+            if(item == null) continue;
+            var itemName = item.getItem_name();
+            var matchedBlockList = ItemTagHelper.getTagList(itemName);
+            if (matchedBlockList != null && !matchedBlockList.isEmpty()) {
+                targetBlockIDList.addAll(matchedBlockList);
+            }
+        }
+    }
+
+    /// 很遗憾....Baritone原生的Mine有许多BUG 所以我自己写了个安全的挖掘方法 至少不会卡住
+    private void mine(BlockPos targetPos) {
+        try{
+            if(ContainerHelper.isContainerOpen()){
+                var client = MinecraftClient.getInstance();
+                client.execute(this::cancelMining);
+                return;
+            }
+
+            var options = ClientUtils.getOptions();
+            if(options == null) {
+                return;
+            }
+
+            var player = ClientUtils.getPlayer();
+            var targetBlock = BlockUtils.getTargetBlock(targetPos);
+            if (targetBlock == null || baritone == null || player == null) {
+                cancelMining();
+                return;
+            }
+
+            if(!isBlockGone(targetPos)){
+                if(!PlayerUtils.isLookingAt(targetPos)) {
+                    var targetRotation = PlayerUtils.calcLookRotationFromVec3d(player,targetPos);
+                    baritone.getLookBehavior().updateTarget(targetRotation,true);
+                }
+
+                options.attackKey.setPressed(true);
+
+                /// 根据当前选中的方块切换到合适工具
+                var holdItemStack = PlayerUtils.getHoldingItemStack();
+                var selectedBlock = PlayerUtils.getSelectedBlock();
+                if(selectedBlock != null){
+                    miningBlockName = PlayerUtils.getSelectedBlockID();
+                    miningBlockPos = PlayerUtils.getSelectedBlockPos();
+                    var selectedBlockState = selectedBlock.getDefaultState();
+                    if(selectedBlockState != null && (holdItemStack == null || !holdItemStack.isSuitableFor(selectedBlockState)) && options.attackKey.isPressed()){
+                        System.out.println("switching to tool");
+                        switchToBestTool(miningBlockPos);
+                    }
+                }
+            }
+            else {
+                currentTargetBlockPos = null;
+                this.collectingState = CollectingState.MOVING_TO_BLOCK;
+                cancelMining();
+            }
+        }
+        catch (Exception e) {
+            System.out.println("Baritone挖掘方块出现错误: " + e.getMessage());
+            e.printStackTrace();
+        }
+    }
+
+    private void cancelMining(){
+        var options = ClientUtils.getOptions();
+        if(options == null) {
+            return;
+        }
+        miningBlockPos = null;
+        miningBlockName = null;
+        options.attackKey.setPressed(false);
+    }
+
+    private void switchToBestTool(BlockPos targetPos) {
+        if(targetPos == null) {
+            return;
+        }
+        if(baritone.getCustomGoalProcess().isActive()) return;
+        var bestToolId = PlayerUtils.getBestToolIDInInventory(targetPos);
+        var toolSlot = SlotHelper.getLSlotByItemID(bestToolId, ComplexContainerType.PLAYER_INFO);
+        if(toolSlot == null) return;
+        toolInHotbar = toolSlot.getSlotType() == LSlotType.INVENTORY_HOTBAR;
+        if(toolInHotbar){
+            ContainerHelper.closeContainer();
+            SlotHelper.switchToHotbarItem(bestToolId);
+        }
+        else{
+            this.collectingState = CollectingState.SWITCHING_TOOL;
+            switchingToolUTasks.clear();
+            var toolQuickLSlotID = SlotHelper.getQuickHotbarLSlotIDForTool(bestToolId);
+            var u1 = new UClickSlotTask(toolSlot,0, SlotActionType.PICKUP);
+            var u2 =  new UClickSlotTask(new InventoryHotBarSlot(toolQuickLSlotID,ComplexContainerType.PLAYER_INFO),0, SlotActionType.PICKUP);
+            var u3 = new UClickSlotTask(toolSlot,0, SlotActionType.PICKUP);
+            switchingToolUTasks.add(u1);
+            switchingToolUTasks.add(u2);
+            switchingToolUTasks.add(u3);
+        }
+    }
+    private void switchToBestTool(){
+        switchToBestTool(currentTargetBlockPos);
     }
 }

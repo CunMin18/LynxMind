@@ -51,17 +51,7 @@ public class BPathingTask extends BTask {
             }
             else if(baritone.getPathingBehavior().getGoal() == null && restartCount < 3){
                 System.out.println("无法找到路径，正在重试，次数：" + restartCount);
-
-                new Thread(() -> {
-                    try {
-                        Thread.sleep(500);
-                    }
-                    catch (InterruptedException e) {
-                        throw new RuntimeException(e);
-                    }
-                    restartCount++;
-                    start();
-                }).start();
+                restartCount++;
             }
             else if(baritone.getPathingBehavior().getGoal() == null && restartCount >= 3){
                 stop("无法到达目的地。");

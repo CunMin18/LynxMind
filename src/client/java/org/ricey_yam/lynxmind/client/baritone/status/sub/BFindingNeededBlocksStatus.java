@@ -11,9 +11,9 @@ import java.util.List;
 
 @Getter
 @Setter
-public class BFindingNeededBlocks extends BStatus {
+public class BFindingNeededBlocksStatus extends BStatus {
     private List<ItemStackLite> needed_blocks;
-    public BFindingNeededBlocks(BlockPos blockPos, List<ItemStackLite> needed_blocks) {
+    public BFindingNeededBlocksStatus(BlockPos blockPos, List<ItemStackLite> needed_blocks) {
         this.type =  BStatusType.BSTATUS_FINDING_NEEDED_BLOCKS;
         this.needed_blocks = needed_blocks;
     }

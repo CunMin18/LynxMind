@@ -5,6 +5,7 @@ import com.google.gson.Gson;
 import com.google.gson.JsonObject;
 import org.ricey_yam.lynxmind.client.ai.message.action.Action;
 import org.ricey_yam.lynxmind.client.ai.message.action.sub.PlayerCollectBlockAction;
+import org.ricey_yam.lynxmind.client.ai.message.action.sub.PlayerCraftingAction;
 import org.ricey_yam.lynxmind.client.ai.message.action.sub.PlayerMoveAction;
 import org.ricey_yam.lynxmind.client.ai.message.action.sub.StopBaritoneAction;
 import org.ricey_yam.lynxmind.client.ai.message.event.ai.sub.AIControlEvent;
@@ -113,6 +114,9 @@ public class LynxJsonHandler {
                 }
                 case "COLLECT_BLOCK" ->{
                     return new TypeToken<PlayerCollectBlockAction>(){};
+                }
+                case "CRAFTING" ->{
+                    return new TypeToken<PlayerCraftingAction>(){};
                 }
                 //todo more action
             }

@@ -9,13 +9,12 @@ import net.minecraft.registry.Registries;
 import net.minecraft.util.Identifier;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.World;
-import org.ricey_yam.lynxmind.client.utils.game_ext.item.ItemUtils;
 
 import java.util.*;
 
 public class BlockUtils {
     /// 搜索最近的方块的位置
-    public static BlockPos findNearestBlock(LivingEntity livingEntity, List<String> targetBlockNameList, int radius) {
+    public static BlockPos findNearestBlock(LivingEntity livingEntity, List<String> targetBlockNameList, int radius,List<BlockPos> blackList) {
         if(livingEntity == null || targetBlockNameList == null || targetBlockNameList.isEmpty()) return null;
         var startPos = livingEntity.getBlockPos();
         var world = livingEntity.getEntityWorld();
@@ -31,7 +30,7 @@ public class BlockUtils {
             BlockPos currentPos = queue.poll();
             var blockName = getBlockName(currentPos);
             for (String targetName : targetBlockNameList) {
-                if (ItemUtils.ItemTagHelper.isFuzzyMatch(targetName, blockName)){
+                if (targetName.equals(blockName) && !blackList.contains(currentPos)) {
                     return currentPos;
                 }
             }
@@ -48,6 +47,9 @@ public class BlockUtils {
         }
 
         return null;
+    }
+    public static BlockPos findNearestBlock(LivingEntity livingEntity, List<String> targetBlockNameList, int radius){
+        return findNearestBlock(livingEntity,targetBlockNameList,radius,List.of());
     }
 
     /// 寻找工作台的放置点
@@ -93,6 +95,13 @@ public class BlockUtils {
         return null;
     }
 
+    /// 获取方块
+    public static Block getTargetBlock(BlockPos pos) {
+        if (pos == null) return null;
+        var state = BlockUtils.getBlockState(pos);
+        return state != null ? state.getBlock() : null;
+    }
+
     /// 获取方块ID
     public static String getBlockName(BlockPos pos) {
         var world = MinecraftClient.getInstance().world;
@@ -103,4 +112,10 @@ public class BlockUtils {
         Identifier blockId = Registries.BLOCK.getId(block);
         return blockId.toString();
     }
+    public static String getBlockName(Block block) {
+        if(block == null) return null;
+        Identifier blockId = Registries.BLOCK.getId(block);
+        return blockId.toString();
+    }
+
 }

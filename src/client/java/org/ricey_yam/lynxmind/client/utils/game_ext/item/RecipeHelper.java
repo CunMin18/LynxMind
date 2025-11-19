@@ -11,6 +11,7 @@ import java.util.*;
 
 public class RecipeHelper {
     private final static HashMap<String, List<RecipeEntry<?>>> mappedRecipes = new HashMap<>();
+    /// 加载配方列表
     private static void mapRecipes() {
         MinecraftClient mc = MinecraftClient.getInstance();
         if (mc.getServer() != null) {
@@ -60,9 +61,5 @@ public class RecipeHelper {
             }
         }
         return null;
-    }
-
-    public static boolean craftingTableNeeding(String itemId) {
-        return RecipeHelper.requiresCraftingTable(itemId);
     }
 }

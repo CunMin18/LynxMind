@@ -15,7 +15,7 @@ import java.util.List;
 
 @Getter
 @Setter
-public class PlayerCreateItemAction extends Action {
+public class PlayerCraftingAction extends Action {
     private List<ItemStackLite> to_craft;
 
     @Expose(deserialize = false)
@@ -24,7 +24,7 @@ public class PlayerCreateItemAction extends Action {
     @Expose(deserialize = false)
     private List<ItemStackLite> craft_success = new ArrayList<>();
 
-    public PlayerCreateItemAction(List<ItemStackLite> to_craft) {
+    public PlayerCraftingAction(List<ItemStackLite> to_craft) {
         this.to_craft = to_craft;
     }
     @Override

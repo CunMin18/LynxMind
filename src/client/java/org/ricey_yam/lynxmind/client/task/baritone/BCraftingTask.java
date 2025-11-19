@@ -7,6 +7,7 @@ import lombok.Setter;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gui.screen.ingame.CraftingScreen;
 import net.minecraft.client.gui.screen.ingame.InventoryScreen;
+import net.minecraft.entity.ItemEntity;
 import net.minecraft.item.ItemStack;
 import net.minecraft.screen.slot.SlotActionType;
 import net.minecraft.util.math.BlockPos;
@@ -14,7 +15,7 @@ import org.ricey_yam.lynxmind.client.ai.AIServiceManager;
 import org.ricey_yam.lynxmind.client.ai.ChatManager;
 import org.ricey_yam.lynxmind.client.ai.LynxJsonHandler;
 import org.ricey_yam.lynxmind.client.ai.message.action.Action;
-import org.ricey_yam.lynxmind.client.ai.message.action.sub.PlayerCreateItemAction;
+import org.ricey_yam.lynxmind.client.ai.message.action.sub.PlayerCraftingAction;
 import org.ricey_yam.lynxmind.client.ai.message.event.player.sub.PlayerBaritoneTaskStop;
 import org.ricey_yam.lynxmind.client.ai.message.game_info.item.ItemStackLite;
 import org.ricey_yam.lynxmind.client.ai.message.game_info.ui.SlotItemStack;
@@ -22,6 +23,7 @@ import org.ricey_yam.lynxmind.client.baritone.BaritoneManager;
 import org.ricey_yam.lynxmind.client.event.LynxMindEndTickEventManager;
 import org.ricey_yam.lynxmind.client.task.ui.*;
 import org.ricey_yam.lynxmind.client.utils.game_ext.*;
+import org.ricey_yam.lynxmind.client.utils.game_ext.entity.PlayerUtils;
 import org.ricey_yam.lynxmind.client.utils.game_ext.interaction.ComplexContainerType;
 import org.ricey_yam.lynxmind.client.utils.game_ext.interaction.ContainerHelper;
 import org.ricey_yam.lynxmind.client.utils.game_ext.item.ItemUtils;
@@ -45,6 +47,8 @@ public class BCraftingTask extends BTask {
     private IBaritone baritone;
     /// 工作台位置
     private BlockPos craftingTablePos;
+    /// 工作台掉落物实体
+    private ItemEntity craftingTableLootEntity;
     /// 需要制作的物品列表
     private List<ItemStackLite> to_craft;
     /// 制作任务状态
@@ -63,11 +67,14 @@ public class BCraftingTask extends BTask {
         this.taskType = BTaskType.CRAFTING;
         this.baritone = BaritoneManager.getClientBaritone();
         this.to_craft = new ArrayList<>(to_craft);
+        this.craft_failed = new ArrayList<>();
+        this.craft_success = new ArrayList<>();
         this.linkedAction = linkedAction;
     }
 
     @Override
     public void start() {
+        this.taskType = BTaskType.CRAFTING;
         if(to_craft.isEmpty()) {
             stop("制作列表为空，停止BTask");
         }
@@ -96,9 +103,34 @@ public class BCraftingTask extends BTask {
                     }
                     /// 尝试寻找附近的工作台
                     craftingTablePos = BlockUtils.findNearestBlock(player, List.of("minecraft:crafting_table"),20);
-                    /// 没有工作台在20格内，看看背包有无工作台，没有就做一个
+                    /// 没有工作台在20格内
                     if(craftingTablePos == null){
-                        if(ItemUtils.hasItem("minecraft:crafting_table")){
+                        /// 如果有工作台掉落物目标，优先寻路捡起掉落物
+                        if(craftingTableLootEntity != null && craftingTableLootEntity.getStack().getCount() > 0){
+                            var newGoal = new GoalBlock(craftingTableLootEntity.getBlockPos());
+                            baritone.getCustomGoalProcess().setGoalAndPath(newGoal);
+                            return;
+                        }
+                        else{
+                            baritone.getCustomGoalProcess().setGoal(null);
+                            baritone.getPathingBehavior().cancelEverything();
+                        }
+
+                        /// 寻找是否有需要的物品的掉落物
+                        var nearestLootEntity = EntityUtils.findNearestEntity(player, ItemEntity.class,15);
+                        if(nearestLootEntity != null && nearestLootEntity.getStack().getCount() > 0) {
+                            var targetStack = nearestLootEntity.getStack();
+                            var isNeededItem = ItemUtils.getItemName(targetStack).equals("minecraft:crafting_table");
+                            if(isNeededItem) {
+                                craftingTableLootEntity = nearestLootEntity;
+                                return;
+                            }
+                            else {
+                                craftingTableLootEntity = null;
+                            }
+                        }
+
+                        if(PlayerUtils.hasItem("minecraft:crafting_table")){
                             System.out.println("有工作台，正在放置工作台...");
                             this.craftingState = CraftingState.PUTTING_CRAFTING_TABLE;
                         }
@@ -110,9 +142,8 @@ public class BCraftingTask extends BTask {
                     /// 找到工作台 寻路到那
                     else{
                         craftingState = CraftingState.PATHING_TO_CRAFTING_TABLE;
-                        var newGoal = new GoalBlock(craftingTablePos.getX(),craftingTablePos.getY(),craftingTablePos.getZ());
-                        baritone.getCustomGoalProcess().setGoal(newGoal);
-                        baritone.getCustomGoalProcess().path();
+                        var newGoal = new GoalBlock(craftingTablePos);
+                        baritone.getCustomGoalProcess().setGoalAndPath(newGoal);
                     }
                 }
                 /// 无需工作台 打开背包制作物品
@@ -142,16 +173,15 @@ public class BCraftingTask extends BTask {
                     var goal = baritone.getPathingBehavior().getGoal();
                     /// 若寻路任务意外丢失 重新创建
                     if(goal == null){
-                        var newGoal = new GoalBlock(craftingTablePos.getX(),craftingTablePos.getY(),craftingTablePos.getZ());
-                        baritone.getCustomGoalProcess().setGoal(newGoal);
-                        baritone.getCustomGoalProcess().path();
+                        var newGoal = new GoalBlock(craftingTablePos);
+                        baritone.getCustomGoalProcess().setGoalAndPath(newGoal);
                     }
                 }
                 /// 靠近工作台 尝试看向工作台
-                else if(!TransformUtils.isLookingAt(craftingTablePos)){
+                else if(!PlayerUtils.isLookingAt(craftingTablePos)){
                     baritone.getCustomGoalProcess().setGoal(null);
                     baritone.getPathingBehavior().cancelEverything();
-                    var targetRotation = TransformUtils.calcLookRotationFromVec3d(player,craftingTablePos);
+                    var targetRotation = PlayerUtils.calcLookRotationFromVec3d(player,craftingTablePos);
                     baritone.getLookBehavior().updateTarget(targetRotation,true);
                 }
                 /// 看向工作台 点击工作台开始制作
@@ -222,7 +252,7 @@ public class BCraftingTask extends BTask {
 
         /// 发送任务停止事件给AI
         if(stopReason != null && !stopReason.isEmpty() && AIServiceManager.isServiceActive && AIServiceManager.isTaskActive() && linkedAction != null){
-            if(linkedAction instanceof PlayerCreateItemAction createAction){
+            if(linkedAction instanceof PlayerCraftingAction createAction){
                 createAction.setCraft_failed(craft_failed);
                 createAction.setCraft_success(craft_success);
             }
@@ -281,8 +311,8 @@ public class BCraftingTask extends BTask {
             this.state = TaskState.IDLE;
             this.crafting_item = crafting_item;
             var recipe = RecipeHelper.getRecipe(crafting_item);
-            var playerItemsInner = ItemUtils.getClientPlayerInventoryItems(LSlotType.INVENTORY_INNER,craftingTableNeeding() ? ComplexContainerType.CRAFTING_TABLE : ComplexContainerType.PLAYER_INFO);
-            var playerItemsHotBar = ItemUtils.getClientPlayerInventoryItems(LSlotType.INVENTORY_HOTBAR,craftingTableNeeding() ? ComplexContainerType.CRAFTING_TABLE : ComplexContainerType.PLAYER_INFO);
+            var playerItemsInner = PlayerUtils.getClientPlayerInventoryItems(LSlotType.INVENTORY_INNER,craftingTableNeeding() ? ComplexContainerType.CRAFTING_TABLE : ComplexContainerType.PLAYER_INFO);
+            var playerItemsHotBar = PlayerUtils.getClientPlayerInventoryItems(LSlotType.INVENTORY_HOTBAR,craftingTableNeeding() ? ComplexContainerType.CRAFTING_TABLE : ComplexContainerType.PLAYER_INFO);
             playerItemsInner.addAll(playerItemsHotBar);
             var playerItems = playerItemsInner;
             if (recipe != null) {
@@ -300,18 +330,19 @@ public class BCraftingTask extends BTask {
                         var matchedItemStackInInventory = getMatchedSlotItemStack(matchTarget, playerItems);
                         var hasMatchedTargetItemInInventory = matchedItemStackInInventory != null;
                         if (hasMatchedTargetItemInInventory) {
-                            //System.out.println("matched item name:" + matchedItemStackInInventory.getItem_stack().getItem_name() + "   |  slotID:" + matchedItemStackInInventory.getL_slot().getLSlotId() + "  |  type: " + matchedItemStackInInventory.getL_slot().getSlotType());
                             var itemStack = matchedItemStackInInventory.getItem_stack().copy();
                             itemStack.setCount(1);
                             var placingSlotItemStack = new SlotItemStack(craftingTableNeeding() ? new CraftingTableItemSlot(i + 1, ComplexContainerType.CRAFTING_TABLE) : new InventoryCraftingSlot(targetSlotIndex + 1,ComplexContainerType.PLAYER_INFO),itemStack);
                             takeout.add(matchedItemStackInInventory);
                             placement.add(placingSlotItemStack);
-                            matchedItemStackInInventory.getItem_stack().setCount(matchedItemStackInInventory.getItem_stack().getCount() - 1);
-                            if(matchedItemStackInInventory.getItem_stack().getCount() <= 0){
-                                playerItems.remove(matchedItemStackInInventory);
+                            if (MinecraftClient.getInstance().world != null) {
+                                matchedItemStackInInventory.getItem_stack().setCount(matchedItemStackInInventory.getItem_stack().getCount() - recipe.getResult(MinecraftClient.getInstance().world.getRegistryManager()).getCount());
+                                if (matchedItemStackInInventory.getItem_stack().getCount() <= 0) {
+                                    playerItems.remove(matchedItemStackInInventory);
+                                }
+                                targetSlotIndex++;
+                                continue outer;
                             }
-                            targetSlotIndex++;
-                            continue outer;
                         }
                     }
                     this.state = TaskState.FAILED;
@@ -340,6 +371,10 @@ public class BCraftingTask extends BTask {
                 var resultLSlot = craftingTableNeeding() ? new CraftingTableItemSlot(0,ComplexContainerType.CRAFTING_TABLE) : new InventoryCraftingSlot(0,ComplexContainerType.PLAYER_INFO);
                 var takeOutResultItemUTask = new UClickSlotTask(resultLSlot,0,SlotActionType.QUICK_MOVE);
                 uTasks.add(takeOutResultItemUTask);
+            }
+            else{
+                this.state = TaskState.FAILED;
+                System.out.println("无法找到该物品配方，跳过制作！");
             }
         }
 
@@ -372,7 +407,7 @@ public class BCraftingTask extends BTask {
 
         /// 是否需要工作台
         public boolean craftingTableNeeding(){
-            return RecipeHelper.craftingTableNeeding(crafting_item);
+            return RecipeHelper.requiresCraftingTable(crafting_item);
         }
 
         /// 根据给出的物品，从玩家已获得的物品中输出匹配的物品
@@ -408,7 +443,7 @@ public class BCraftingTask extends BTask {
             this.craftingTablePlacingPointSearchingRange = 4;
 
             /// 是否有工作台，若没有则返回
-            if(!ItemUtils.hasItem("minecraft:crafting_table")){
+            if(!PlayerUtils.hasItem("minecraft:crafting_table")){
                 parentTask.setCraftingState(CraftingState.FINDING_CRAFTING_WAY);
                 this.state = TaskState.FAILED;
                 return;
@@ -417,6 +452,7 @@ public class BCraftingTask extends BTask {
             /// 寻找工作台的格子
             var currentCraftingTableLSlot = SlotHelper.getLSlotByItemID("minecraft:crafting_table", ComplexContainerType.PLAYER_INFO);
             if(currentCraftingTableLSlot == null) {
+                this.state = TaskState.FAILED;
                 System.out.println("CurrentCraftingTableLSlot is null!");
                 return;
             }
@@ -424,7 +460,6 @@ public class BCraftingTask extends BTask {
             this.isCraftingTableInHotbar = currentCraftingTableLSlot.getSlotType() == LSlotType.INVENTORY_HOTBAR;
             /// 不是：创建打开背包把工作台移动到快捷栏的UTask
             if(!this.isCraftingTableInHotbar){
-                SlotHelper.clickContainerSlot(currentCraftingTableLSlot,8,SlotActionType.SWAP);
                 var takeoutUTask = new UClickSlotTask(currentCraftingTableLSlot,0,SlotActionType.PICKUP);
                 var putUTask = new UClickSlotTask(new InventoryHotBarSlot(8,ComplexContainerType.PLAYER_INFO),0,SlotActionType.PICKUP);
                 var takeCursorItemBack = new UClickSlotTask(currentCraftingTableLSlot,0,SlotActionType.PICKUP);
@@ -459,16 +494,15 @@ public class BCraftingTask extends BTask {
                 /// 放置点太远，尝试寻路
                 if(!isCTPlacingPointInRange()){
                     var newGoal = new GoalBlock(cTPlacingPointPos.getX(),cTPlacingPointPos.getY(),cTPlacingPointPos.getZ());
-                    baritone.getCustomGoalProcess().setGoal(newGoal);
-                    baritone.getCustomGoalProcess().path();
+                    baritone.getCustomGoalProcess().setGoalAndPath(newGoal);
                 }
                 else{
                     baritone.getCustomGoalProcess().setGoal(null);
                     baritone.getPathingBehavior().cancelEverything();
                     /// 看向放置点
-                    if(!TransformUtils.isLookingAt(cTPlacingPointPos.down())){
+                    if(!PlayerUtils.isLookingAt(cTPlacingPointPos.down())){
                         System.out.println("正在看向放置点！");
-                        var targetRotation = TransformUtils.calcLookRotationFromVec3d(player,cTPlacingPointPos.down());
+                        var targetRotation = PlayerUtils.calcLookRotationFromVec3d(player,cTPlacingPointPos.down());
                         baritone.getLookBehavior().updateTarget(targetRotation,true);
                     }
                     else{

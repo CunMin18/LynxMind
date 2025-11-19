@@ -131,40 +131,24 @@ LynxMind 项目的 JSON Schema 定义与事件规范。这份文档详细说明�
     - `posX`/`posY`/`posZ` 玩家坐标信息
     - `yaw` 玩家偏航角
     - `pitch` 玩家俯仰角
-    - `inventroy`玩家背包
-      - `name` 物品ID
-      - `count` 物品数量
-    ```json
-    {
-      //...
-      "inventory":
-      [
-        {        
-          "item_stack": {
-            "item_name": "minecraft:diamond",
-            "mining_block_name": 33
-          },
-          "slot_id": 0
-        },
-        {        
-          "item_stack": {
-            "item_name": "minecraft:apple",
-            "mining_block_name": 5
-          },
-          "slot_id": 1
-        },
-        {        
-          "item_stack": {
-            "item_name": "minecraft:iron_ingot",
-            "mining_block_name": 6
-          },
-          "slot_id": 2
-        }
-      ]
-      //...
-    }
-    ```
-    - `current_baritone_task` 当前 Baritone 正在进行的动作  
+    - `inventory_hotbar`玩家背包（快捷栏）
+    - `inventory_inner`玩家背包（非快捷栏）
+    - `inventory_equipment`玩家背包（盔甲及副手物品）
+       - `item_stack` 物品信息
+         - `item_name` 物品ID
+         - `count` 物品数量
+       - `l_slot` 物品格子
+         - `slotType` 格子类型
+           - `LSlotType.INVENTORY_INNER` 非快捷栏格子
+           - `LSlotType.INVENTORY_HOTBAR` 快捷栏格子
+           - `LSlotType.INVENTORY_EQUIPMENT` 盔甲/副手格子
+         - `id` 格子ID
+           - 我们规定格子ID是从左到右，从上到下，依次增加的，由0开始。
+             - `LSlotType.INVENTORY_INNER` `0-26`
+             - `LSlotType.INVENTORY_HOTBAR` `0-8`
+             - `LSlotType.INVENTORY_EQUIPMENT` `0-3 依次为头盔/胸甲/护腿/靴子` `4 副手`
+         - `complexContainerType` 工具变量，无需在意
+      - `current_baritone_task` 当前 Baritone 正在进行的动作  
 - **`current_baritone_task`包含的类型**
   -  #### 无动作(`NONE`)
   ```json
@@ -214,6 +198,48 @@ LynxMind 项目的 JSON Schema 定义与事件规范。这份文档详细说明�
     //...
   }
   ```
+  -  #### 正在制作所需物品(`BSTATUS_CRAFTING`)
+      - `to_crafting` 即将制作的物品
+      - `craft_failed` 制作失败的物品
+      - `craft_success` 制作成功的物品
+        - `name`: 制作的方块ID
+        - `count`：制作的数量
+  ```json
+  {
+    //...
+    "current_baritone_task":
+    {
+      "type": "BSTATUS_CRAFTING",
+      "to_crafting": [
+        {
+          "item_name": "minecraft:diamond_axe",
+          "count": 1
+        },
+        {
+          "item_name": "minecraft:diamond_pickaxe",
+          "count": 1
+        },
+      ],
+      "craft_failed": [
+        {
+          "item_name": "minecraft:diamond_helmet",
+          "count": 1
+        },
+      ],
+      "craft_success": [
+        {
+          "item_name": "minecraft:diamond_boots",
+          "count": 1
+        },
+        {
+          "item_name": "minecraft:diamond_sword",
+          "count": 1
+        },
+      ]
+    }
+    //...
+  }
+  ```
   -  #### 正在寻路到某个点（X/Y/Z）(`BSTATUS_PATHING_TO_GOAL`)
         - `x`/`y`/`z` 目标坐标
   ```json
@@ -257,19 +283,102 @@ LynxMind 项目的 JSON Schema 定义与事件规范。这份文档详细说明�
   "posZ": 203.1,
   "yaw": 180.0,
   "pitch": 0.0,
-  "inventory": [
+  "inventory_hotbar":
+  [
     {
-      "item_name": "minecraft:stick",
-      "count": 64
+      "item_stack": {
+        "item_name": "minecraft:diamond",
+        "count": 33
+      },
+      "l_slot": {
+        "slotType": "LSlotType.INVENTORY_HOTBAR",
+        "id": 0
+      },
+      "complexContainerType": "ComplexContainerType.PLAYER_INFO"
     },
     {
-      "item_name": "minecraft:stick",
-      "count": 12
+      "item_stack": {
+        "item_name": "minecraft:gold_ingot",
+        "count": 12
+      },
+      "l_slot": {
+        "slotType": "LSlotType.INVENTORY_HOTBAR",
+        "id": 1
+      },
+      "complexContainerType": "ComplexContainerType.PLAYER_INFO"
+    },
+  ],
+  "inventory_inner":
+  [
+    {
+      "item_stack": {
+        "item_name": "minecraft:dirt",
+        "count": 64
+      },
+      "l_slot": {
+        "slotType": "LSlotType.INVENTORY_INNER",
+        "id": 0
+      },
+      "complexContainerType": "ComplexContainerType.PLAYER_INFO"
     },
     {
-      "item_name": "minecraft:diamond",
-      "count": 3
-    }
+      "item_stack": {
+        "item_name": "minecraft:stick",
+        "count": 4
+      },
+      "l_slot": {
+        "slotType": "LSlotType.INVENTORY_INNER",
+        "id": 2
+      },
+      "complexContainerType": "ComplexContainerType.PLAYER_INFO"
+    },
+  ],
+  "inventory_equipment":
+  [
+    {
+      "item_stack": {
+        "item_name": "minecraft:diamond_helmet",
+        "count": 1
+      },
+      "l_slot": {
+        "slotType": "LSlotType.INVENTORY_EQUIPMENT",
+        "id": 0
+      },
+      "complexContainerType": "ComplexContainerType.PLAYER_INFO"
+    },
+    {
+      "item_stack": {
+        "item_name": "minecraft:diamond_chestplate",
+        "count": 1
+      },
+      "l_slot": {
+        "slotType": "LSlotType.INVENTORY_EQUIPMENT",
+        "id": 1
+      },
+      "complexContainerType": "ComplexContainerType.PLAYER_INFO"
+    },
+    {
+      "item_stack": {
+        "item_name": "minecraft:diamond_leggings",
+        "count": 1
+      },
+      "l_slot": {
+        "slotType": "LSlotType.INVENTORY_EQUIPMENT",
+        "id": 2
+      },
+      "complexContainerType": "ComplexContainerType.PLAYER_INFO"
+    },
+    {
+      "item_stack": {
+        "item_name": "minecraft:diamond_boots",
+        "count": 1
+      },
+      "l_slot": {
+        "slotType": "LSlotType.INVENTORY_EQUIPMENT",
+        "id": 3
+      },
+      "complexContainerType": "ComplexContainerType.PLAYER_INFO"
+    },
   ],
   "current_baritone_task": {
     "type": "BSTATUS_FINDING_NEEDED_BLOCKS",
@@ -306,7 +415,7 @@ LynxMind 项目的 JSON Schema 定义与事件规范。这份文档详细说明�
 }
 ```
 #### 2.2.4 玩家Baritone任务`BTASK`取消事件 (`EVENT_PLAYER_BARITONE_TASK_STOP`)
-- **作用**: 告诉AI Baritone的某个TASK`BTASK`被取消了（比如寻路/收集TASK，不是玩家布置给AI的任务），便于AI进行下一步操作。
+- **作用**: 告诉AI Baritone的某个TASK`BTASK`被取消了（比如寻路/收集TASK，不是玩家布置给AI的任务），便于告知AI Baritone任务执行的结果，让AI进行下一步操作。
 - **系统何时发送**：
     - `BTASK`因各种原因被取消
 - **包含信息**:
@@ -374,24 +483,39 @@ LynxMind 项目的 JSON Schema 定义与事件规范。这份文档详细说明�
   ]
 }
 ```
-## 4.特殊情况
+### 3.4 玩家制作物品事件(`ACTION_CRAFTING`)
+- **作用**: 利用 Baritone 创建`BTASK`让角色自动制作物品（在材料充足的情况下）（如果需要工作台，Baritone会自动寻找或自己制作），该 `Action` 对应的`BTASK`会在制作完全部物品（无论成功或失败）后自动停止！
+- **包含信息**:
+- `to_craft` 需要制作的物品信息
+  - `name`: 需要制作的物品ID
+  - `count`：需要制作的数量
+- `craft_failed` 制作失败的物品（AI无需填写，仅作为结果输出）
+- `craft_success` 制作成功的物品（AI无需填写，仅作为结果输出）
+- **示例**:
+```json
+{
+    "type": "ACTION_CRAFTING",
+    "to_craft": [
+        {
+            "item_name": "minecraft:diamond_pickaxe",
+            "count": 1
+        },
+        {
+            "item_name": "minecraft:diamond_helmet",
+            "count": 1
+        },
+        {
+            "item_name": "minecraft:diamond_chestplate",
+            "count": 1
+        },
+    ]
+}
+```
+## 4.特别注意！！
+- 关于物品标签：
+    - `log` 对应任意类型的原木 如果你不知道周边情况且需要原木，**强烈建议**在`ACTION_COLLECT_BLOCK`传入.
+- 目前你操控的玩家是生存模式，你必须了解全部MC知识，确保某些方块需要特定工具才能被破坏并产生掉落物，以及，某些方块需要破坏特定的方块才能获得！
+- 制作物品需要材料充足，否则就无法制作，AI必须了解玩家背包有哪些物品再使用Baritone制作！
+- `ACTION_CRAFTING`中需要制作物品的ID必须精确！比如：需要合成橡木木板时物品ID为(`minecraft:oak_planks`)
 - 若因忘记格式被提醒，可直接回复空消息，或等待接收玩家状态消息后再做决策.
-- 涉及到坐标计算时，须记住以下规则：
-    - 十分重要：X轴指向**正东**方向，Z轴指向**正南**方向。
-    - 玩家偏航角(`yaw`)范围在-180°到180°。
-    - 偏航角(`yaw`)为 **90°** 时玩家面向**正西**（X轴负方向），为 **180°或-180°** 时玩家面向**正北**（Z轴负方向）。
-    - 玩家俯仰角(`pitch`)的范围在-90°到90°（通常计算水平移动时可忽略）。
-      - 当需要计算玩家沿当前朝向移动后的坐标时，**必须**执行以下步骤：
-          - **给定：**
-              - 玩家当前坐标: (X0, Y0, Z0)
-              - 玩家偏航角 (yaw): [角度]°
-              - 移动距离: D 格
-          - **计算步骤：**
-              1.  `math_angle = -yaw`
-              2.  `radians = math_angle * π / 180`
-              3.  `ΔX = D * sin(radians)`
-              4.  `ΔZ = D * cos(radians)`
-              5.  `目标X = X0 + ΔX`
-              6.  `目标Z = Z0 + ΔZ`
-          - **请把结果四舍五入为整数返回到指定Json，禁止在Json里面出现公式！**
 ## 目前模组处于开发阶段，更多事件/动作敬请期待！

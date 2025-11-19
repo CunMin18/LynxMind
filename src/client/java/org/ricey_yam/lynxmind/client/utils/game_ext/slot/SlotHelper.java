@@ -5,6 +5,7 @@ import net.minecraft.item.ItemStack;
 import net.minecraft.screen.slot.Slot;
 import net.minecraft.screen.slot.SlotActionType;
 import org.ricey_yam.lynxmind.client.utils.game_ext.ClientUtils;
+import org.ricey_yam.lynxmind.client.utils.game_ext.entity.PlayerUtils;
 import org.ricey_yam.lynxmind.client.utils.game_ext.interaction.ComplexContainerType;
 import org.ricey_yam.lynxmind.client.utils.game_ext.item.ItemUtils;
 
@@ -44,8 +45,8 @@ public class SlotHelper {
         var player = MinecraftClient.getInstance().player;
         if(player == null) return null;
         var screenHandler = player.currentScreenHandler;
-        var playerItemsInner = ItemUtils.getClientPlayerInventoryItems(LSlotType.INVENTORY_INNER,complexContainerType);
-        var playerItemsHotBar = ItemUtils.getClientPlayerInventoryItems(LSlotType.INVENTORY_HOTBAR,complexContainerType);
+        var playerItemsInner = PlayerUtils.getClientPlayerInventoryItems(LSlotType.INVENTORY_INNER,complexContainerType);
+        var playerItemsHotBar = PlayerUtils.getClientPlayerInventoryItems(LSlotType.INVENTORY_HOTBAR,complexContainerType);
         playerItemsHotBar.addAll(playerItemsInner);
         for(var slotItem : playerItemsHotBar){
             if(slotItem.getItem_stack().getItem_name().equals(itemId)){
@@ -124,5 +125,14 @@ public class SlotHelper {
             case BREWING_STAND ->  result = 5;
         }
         return result;
+    }
+
+    public static int getQuickHotbarLSlotIDForTool(String toolId){
+        if(toolId.contains("sword")) return 0;
+        if(toolId.contains("pickaxe")) return 1;
+        if(toolId.contains("axe")) return 2;
+        if(toolId.contains("shovel")) return 3;
+        if(toolId.contains("hoe") || toolId.contains("shears")) return 4;
+        return 5;
     }
 }
