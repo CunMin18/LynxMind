@@ -10,10 +10,10 @@ import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.network.ClientPlayerEntity;
 import org.ricey_yam.lynxmind.client.baritone.status.sub.*;
 import org.ricey_yam.lynxmind.client.event.LynxMindEndTickEventManager;
-import org.ricey_yam.lynxmind.client.task.baritone.BCollectionTask;
+import org.ricey_yam.lynxmind.client.task.temp.baritone.BCollectionTask;
 import org.ricey_yam.lynxmind.client.baritone.status.BStatus;
-import org.ricey_yam.lynxmind.client.task.baritone.BCraftingTask;
-import org.ricey_yam.lynxmind.client.task.baritone.BTaskType;
+import org.ricey_yam.lynxmind.client.task.temp.baritone.BCraftingTask;
+import org.ricey_yam.lynxmind.client.task.temp.baritone.BTaskType;
 
 @Getter
 @Setter
@@ -80,7 +80,7 @@ public class BaritoneManager {
 
     /// 停止所有BTask
     public static void stopAllTasks(String reason) {
-        LynxMindEndTickEventManager.cleanAllTasks(reason);
+        LynxMindEndTickEventManager.cleanTempTasks(reason);
     }
 
     /// 停止所有需要寻路的BTask

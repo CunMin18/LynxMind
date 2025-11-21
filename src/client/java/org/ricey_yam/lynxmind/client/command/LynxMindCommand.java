@@ -1,6 +1,7 @@
 package org.ricey_yam.lynxmind.client.command;
 
 import com.mojang.brigadier.CommandDispatcher;
+import com.mojang.brigadier.arguments.BoolArgumentType;
 import com.mojang.brigadier.arguments.IntegerArgumentType;
 import com.mojang.brigadier.arguments.StringArgumentType;
 import com.mojang.brigadier.context.CommandContext;
@@ -13,6 +14,11 @@ import org.ricey_yam.lynxmind.client.ai.AIServiceManager;
 import org.ricey_yam.lynxmind.client.ai.ChatManager;
 import org.ricey_yam.lynxmind.client.ai.LynxJsonHandler;
 import org.ricey_yam.lynxmind.client.ai.message.action.sub.PlayerCraftingAction;
+import org.ricey_yam.lynxmind.client.ai.message.event.player.sub.PlayerScanBlockEvent;
+import org.ricey_yam.lynxmind.client.ai.message.event.player.sub.PlayerScanEntityEvent;
+import org.ricey_yam.lynxmind.client.event.LynxMindEndTickEventManager;
+import org.ricey_yam.lynxmind.client.task.non_temp.lynx.LTaskType;
+import org.ricey_yam.lynxmind.client.task.non_temp.lynx.sub.LAutoStrikeBackTask;
 import org.ricey_yam.lynxmind.client.utils.game_ext.item.ItemStackLite;
 import org.ricey_yam.lynxmind.client.baritone.BaritoneManager;
 import org.ricey_yam.lynxmind.client.config.AIServiceConfig;
@@ -23,7 +29,6 @@ import org.ricey_yam.lynxmind.client.ai.message.event.player.sub.PlayerStatusHea
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-import java.util.Objects;
 
 public class LynxMindCommand {
     public static void register(CommandDispatcher<ServerCommandSource> dispatcher, CommandRegistryAccess registryAccess, CommandManager.RegistrationEnvironment environment) {
@@ -58,7 +63,8 @@ public class LynxMindCommand {
                         .then(CommandManager.literal("mine")
                                 .then(CommandManager.argument("count", IntegerArgumentType.integer())
                                     .then(CommandManager.argument("item_id", StringArgumentType.greedyString())
-                                        .executes(BaritoneExecutor::mine))
+                                        .executes(BaritoneExecutor::mine)
+                                    )
                                 )
                         )
                         .then(CommandManager.literal("craft")
@@ -72,6 +78,25 @@ public class LynxMindCommand {
                 .then(CommandManager.literal("debug")
                         .then(CommandManager.literal("status")
                                 .executes(DebugExecutor::getStatus)
+                        )
+                        .then(CommandManager.literal("scan_block")
+                                .then(CommandManager.argument("radius", IntegerArgumentType.integer())
+                                    .then(CommandManager.argument("block_id", StringArgumentType.greedyString())
+                                            .executes(DebugExecutor::scanBlockNearby)
+                                    )
+                                )
+                        )
+                        .then(CommandManager.literal("scan_entity")
+                                .then(CommandManager.argument("radius", IntegerArgumentType.integer())
+                                        .then(CommandManager.argument("entity_id", StringArgumentType.greedyString())
+                                                .executes(DebugExecutor::scanEntityNearby)
+                                        )
+                                )
+                        )
+                        .then(CommandManager.literal("auto_killaura")
+                                .then(CommandManager.argument("enabled", BoolArgumentType.bool())
+                                        .executes(DebugExecutor::autoKillaura)
+                                )
                         )
                 )
         );
@@ -225,6 +250,54 @@ public class LynxMindCommand {
             }
             catch(Exception e){
                 System.out.println("查询玩家状态时遇到错误：" + e.getMessage());
+                e.printStackTrace();
+            }
+            return 1;
+        }
+        private static int scanBlockNearby(CommandContext<ServerCommandSource> context){
+            try{
+                var radius = IntegerArgumentType.getInteger(context,"radius");
+                var blockIDs =  StringArgumentType.getString(context,"block_id");
+                var block_id_list = Arrays.asList(blockIDs.trim().split("\\s+"));
+
+                var playerScanBlockEvent = new PlayerScanBlockEvent(radius,block_id_list);
+                var serialized = LynxJsonHandler.serialize(playerScanBlockEvent);
+                LynxMindClient.sendModMessage("附近方块\n" + serialized);
+            }
+            catch(Exception e){
+                System.out.println("扫描附近方块时遇到错误：" + e.getMessage());
+                e.printStackTrace();
+            }
+            return 1;
+        }
+        private static int scanEntityNearby(CommandContext<ServerCommandSource> context){
+            try{
+                var radius = IntegerArgumentType.getInteger(context,"radius");
+                var entityIds =  StringArgumentType.getString(context,"entity_id");
+                var entity_id_list = Arrays.asList(entityIds.trim().split("\\s+"));
+
+                var playerScanEntityEvent = new PlayerScanEntityEvent(radius,entity_id_list);
+                var serialized = LynxJsonHandler.serialize(playerScanEntityEvent);
+                LynxMindClient.sendModMessage("附近实体\n" + serialized);
+            }
+            catch(Exception e){
+                System.out.println("扫描附近实体时遇到错误：" + e.getMessage());
+                e.printStackTrace();
+            }
+            return 1;
+        }
+        private static int autoKillaura(CommandContext<ServerCommandSource> context){
+            try{
+                var enabled = BoolArgumentType.getBool(context,"enabled");
+                if(enabled){
+                    LynxMindEndTickEventManager.registerTask(new LAutoStrikeBackTask(5,10));
+                }
+                else{
+                    LynxMindEndTickEventManager.unregisterTask(LTaskType.AUTO_STRIKE_BACK,"COMMAND");
+                }
+            }
+            catch(Exception e){
+                System.out.println("自动杀戮光环开启失败: " + e.getMessage());
                 e.printStackTrace();
             }
             return 1;

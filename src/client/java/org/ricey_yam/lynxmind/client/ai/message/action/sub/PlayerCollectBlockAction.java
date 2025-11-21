@@ -6,7 +6,7 @@ import org.ricey_yam.lynxmind.client.LynxMindClient;
 import org.ricey_yam.lynxmind.client.utils.game_ext.item.ItemStackLite;
 import org.ricey_yam.lynxmind.client.baritone.BaritoneManager;
 import org.ricey_yam.lynxmind.client.event.LynxMindEndTickEventManager;
-import org.ricey_yam.lynxmind.client.task.baritone.BCollectionTask;
+import org.ricey_yam.lynxmind.client.task.temp.baritone.BCollectionTask;
 import org.ricey_yam.lynxmind.client.ai.message.action.Action;
 
 import java.util.List;

@@ -3,6 +3,7 @@ package org.ricey_yam.lynxmind.client.ai;
 import com.google.gson.Gson;
 import lombok.Getter;
 import lombok.Setter;
+import org.ricey_yam.lynxmind.client.LynxMindBrain;
 import org.ricey_yam.lynxmind.client.LynxMindClient;
 import org.ricey_yam.lynxmind.client.baritone.BaritoneManager;
 import org.ricey_yam.lynxmind.client.config.AIServiceConfig;
@@ -63,6 +64,7 @@ public class AIServiceManager {
         isServiceActive = false;
         chatMessages.clear();
         stopTask("AI服务已关闭！");
+        LynxMindBrain.sleep("AI服务已关闭!");
     }
 
     /// 发送消息并接收回复

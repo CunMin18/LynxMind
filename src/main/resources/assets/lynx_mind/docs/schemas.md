@@ -83,6 +83,40 @@ LynxMind 项目的 JSON Schema 定义与事件规范。这份文档详细说明�
   "type": "EVENT_AI_GET_STATUS"
 }
 ```
+#### 2.1.6 扫描玩家附近指定方块事件 (`EVENT_AI_GET_NEARBY_BLOCK`)
+*   **作用**: AI 主动向系统查询 “我（玩家角色）附近指定方块的位置 便于判断所需资源分布情况和周边环境”。
+*   **何时使用**: AI 打算收集某些材料 但不清楚玩家周边情况时。
+*   **包含内容**: 
+  - `radius` 搜寻的范围 不要给太大 否则会加剧性能负担!
+  - `target_block_id` 你要搜寻的方块ID
+*   **示例**:
+```json
+{
+  "type": "EVENT_AI_GET_NEARBY_BLOCK",
+  "radius": 15,
+  "target_block_id": [
+    "minecraft:jungle_log",
+    "minecraft:oak_log"
+  ]
+}
+```
+#### 2.1.7 扫描玩家附近指定实体事件 (`EVENT_AI_GET_NEARBY_ENTITY`)
+*   **作用**: AI 主动向系统查询 “我（玩家角色）附近指定实体的位置和状态 便于判断周边环境”。
+*   **何时使用**: AI 打算收集某些材料(只能从生物身上获得)。
+*   **包含内容**:
+- `radius` 搜寻的范围 不要给太大 否则会加剧性能负担!
+- `target_entity_id` 你要搜寻的实体ID
+*   **示例**:
+```json
+{
+  "type": "EVENT_AI_GET_NEARBY_BLOCK",
+  "radius": 20,
+  "target_block_id": [
+    "minecraft:pig",
+    "minecraft:cow"
+  ]
+}
+```
 ### 2.2 系统 / 玩家发送的事件（AI 接收的事件）
 #### 2.2.1 玩家创建任务事件 (`EVENT_PLAYER_STATUS_CREATE_TASK`)
 - **作用**:
@@ -147,6 +181,7 @@ LynxMind 项目的 JSON Schema 定义与事件规范。这份文档详细说明�
              - `LSlotType.INVENTORY_EQUIPMENT` `0-3 依次为头盔/胸甲/护腿/靴子` `4 副手`
          - `complexContainerType` 工具变量，无需在意
       - `current_baritone_task` 当前 Baritone 正在进行的动作  
+      - `nearby_entities` 附近15格的实体 (任意类型)
 - **`current_baritone_task`包含的类型**
   -  #### 无动作(`NONE`)
   ```json
@@ -394,6 +429,28 @@ LynxMind 项目的 JSON Schema 定义与事件规范。这份文档详细说明�
         "count": 18
       },
     ]
+  },
+  "nearby_entities": {
+    "type": "EVENT_PLAYER_SCAN_ENTITY",
+    "radius": 15,
+    "nearby_entities": [
+      {
+        "id": "minecraft:zombie",
+        "max_health": 20,
+        "current_health": 16,
+        "x": 124,
+        "y": 102,
+        "z": 551
+      },
+      {
+        "id": "minecraft:skeleton",
+        "max_health": 20,
+        "current_health": 20,
+        "x": 128,
+        "y": 102,
+        "z": 550
+      }
+    ]
   }
 }
 ```
@@ -431,6 +488,79 @@ LynxMind 项目的 JSON Schema 定义与事件规范。这份文档详细说明�
     "y": 22,
     "z": 18
   }
+}
+```
+#### 2.2.5 玩家扫描周边方块事件 (`EVENT_PLAYER_SCAN_BLOCK`)
+- **作用**: 告诉AI玩家周边指定方块的位置(一般为`EVENT_AI_GET_NEARBY_BLOCK`的返回结果)。
+- **系统何时发送**：
+    - AI发送`EVENT_AI_GET_NEARBY_BLOCK`后
+- **包含信息**:
+    - `radius` 扫描范围(AI指定)
+    - `scanning_id` 需要扫描的方块ID(AI指定)
+    - `nearby_blocks` 扫描的结果
+- **示例:**
+
+```json
+{
+  "type": "EVENT_PLAYER_SCAN_BLOCK",
+  "radius": 15,
+  "scanning_id": [
+    "minecraft:diamond_ore",
+    "minecraft:gold_ore"
+  ],
+  "nearby_blocks": [
+    {
+      "id": "minecraft:diamond_ore",
+      "x": 15,
+      "y": 45,
+      "z": 55
+    },
+    {
+      "id": "minecraft:diamond_ore",
+      "x": 15,
+      "y": 46,
+      "z": 55
+    }
+  ]
+}
+```
+#### 2.2.6 玩家扫描周边实体事件 (`EVENT_PLAYER_SCAN_ENTITY`)
+- **作用**: 告诉AI玩家周边指定方块的位置(一般为`EVENT_AI_GET_NEARBY_ENTITY`的返回结果)。
+- **系统何时发送**：
+    - AI发送`EVENT_AI_GET_NEARBY_ENTITY`后
+    - 会包含于玩家心跳事件`EVENT_PLAYER_STATUS_HEARTBEAT`内(`radius`: 15,扫描任意实体)
+- **包含信息**:
+    - `radius` 扫描范围(AI指定)
+    - `scanning_id` 需要扫描的实体ID(AI指定)
+    - `nearby_entities` 扫描的结果
+- **示例:**
+
+```json
+{
+  "type": "EVENT_PLAYER_SCAN_ENTITY",
+  "radius": 15,
+  "scanning_id": [
+    "minecraft:chicken",
+    "minecraft:pig"
+  ],
+  "nearby_entities": [
+    {
+      "id": "minecraft:pig",
+      "max_health": 10,
+      "current_health": 8,
+      "x": 10,
+      "y": 102,
+      "z": 66
+    },
+    {
+      "id": "minecraft:pig",
+      "max_health": 10,
+      "current_health": 9,
+      "x": 11,
+      "y": 100,
+      "z": 65
+    }
+  ]
 }
 ```
 ## 3. 支持的动作类型 (`Action`)

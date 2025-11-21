@@ -44,7 +44,6 @@ public class SlotHelper {
     public static LSlot getLSlotByItemID(String itemId,ComplexContainerType complexContainerType){
         var player = MinecraftClient.getInstance().player;
         if(player == null) return null;
-        var screenHandler = player.currentScreenHandler;
         var playerItemsInner = PlayerUtils.getClientPlayerInventoryItems(LSlotType.INVENTORY_INNER,complexContainerType);
         var playerItemsHotBar = PlayerUtils.getClientPlayerInventoryItems(LSlotType.INVENTORY_HOTBAR,complexContainerType);
         playerItemsHotBar.addAll(playerItemsInner);

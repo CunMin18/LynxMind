@@ -2,9 +2,12 @@ package org.ricey_yam.lynxmind.client.event;
 
 import lombok.Getter;
 import lombok.Setter;
+import org.ricey_yam.lynxmind.client.task.IAbsoluteTask;
+import org.ricey_yam.lynxmind.client.task.ICoexistingTask;
 import org.ricey_yam.lynxmind.client.task.Task;
 
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 
 @Getter
@@ -12,20 +15,13 @@ import java.util.List;
 public class LynxMindEndTickEvent<T extends Task<U>,U> {
     protected List<T> taskList = new ArrayList<>();
 
-    public void tick() throws InterruptedException {
+    public void tick(){
         if(taskList == null || taskList.isEmpty()) {
             return;
         }
-        for (int i = 0; i < taskList.size(); i++) {
-            var task = taskList.get(i);
-            if (task == null) {
-                continue;
-            }
-            if (task.getCurrentTaskState() != Task.TaskState.FINISHED) {
-                task.tick();
-            }
-        }
-    };
+        absoluteEventTick();
+        coexistingEventTick();
+    }
 
     public void register(T task){
         if(task == null) return;
@@ -45,7 +41,7 @@ public class LynxMindEndTickEvent<T extends Task<U>,U> {
         }
         if(!containTask) taskList.add(task);
         task.start();
-    };
+    }
 
     public void unregister(U taskType, String reason){
         if(taskList == null) {
@@ -59,14 +55,14 @@ public class LynxMindEndTickEvent<T extends Task<U>,U> {
                 taskList.remove(i);
             }
         }
-    };
+    }
 
     public void clean(String reason){
         for(var task : taskList){
             if(task != null) task.stop("Task被手动清理");
         }
         taskList.clear();
-    };
+    }
 
     public T getTask(U taskType){
         for(var task : taskList){
@@ -74,5 +70,43 @@ public class LynxMindEndTickEvent<T extends Task<U>,U> {
             if(task.getTaskType() == taskType) return task;
         }
         return null;
-    };
+    }
+
+    private void absoluteEventTick(){
+        T highestWeightTask = taskList
+                .stream()
+                .max(Comparator.comparingDouble(t -> t instanceof IAbsoluteTask iAbsoluteTask ? iAbsoluteTask.getWeight() : 0))
+                .orElse(null);
+
+        if(highestWeightTask != null){
+            for (int i = 0; i < taskList.size(); i++) {
+                var task = taskList.get(i);
+                if(task == null) continue;
+                if(!(task instanceof IAbsoluteTask)) continue;
+                if(task == highestWeightTask){
+                    if (task.getCurrentTaskState() == Task.TaskState.IDLE) {
+                        task.tick();
+                    }
+                    else if(task.getTaskType() == Task.TaskState.PAUSED){
+                        task.start();
+                    }
+                }
+                else{
+                    if(task.getTaskType() == Task.TaskState.IDLE) {
+                        task.pause();
+                    }
+                }
+            }
+        }
+    }
+    private void coexistingEventTick(){
+        for (int i = 0; i < taskList.size(); i++) {
+            var task = taskList.get(i);
+            if(task == null) continue;
+            if(!(task instanceof ICoexistingTask)) continue;
+            if (task.getCurrentTaskState() == Task.TaskState.IDLE) {
+                task.tick();
+            }
+        }
+    }
 }

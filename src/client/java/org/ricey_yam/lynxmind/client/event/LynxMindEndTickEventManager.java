@@ -5,44 +5,39 @@ import lombok.Setter;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import net.minecraft.client.MinecraftClient;
 import org.ricey_yam.lynxmind.client.task.Task;
-import org.ricey_yam.lynxmind.client.task.baritone.BTask;
-import org.ricey_yam.lynxmind.client.task.baritone.BTaskType;
-import org.ricey_yam.lynxmind.client.task.ui.UTask;
-import org.ricey_yam.lynxmind.client.task.ui.UTaskType;
+import org.ricey_yam.lynxmind.client.task.non_temp.INonTempType;
+import org.ricey_yam.lynxmind.client.task.non_temp.NonTempTask;
+import org.ricey_yam.lynxmind.client.task.temp.ITempTaskType;
+import org.ricey_yam.lynxmind.client.task.temp.TempTask;
+import org.ricey_yam.lynxmind.client.utils.game_ext.ClientUtils;
 
 @Getter
 @Setter
 public class LynxMindEndTickEventManager {
-    private static LynxMindEndTickEvent<BTask,BTaskType> B_END_TICK_EVENT = null;
-    private static LynxMindEndTickEvent<UTask,UTaskType> U_END_TICK_EVENT = null;
+    private static LynxMindEndTickEvent<TempTask<ITempTaskType>,ITempTaskType> TEMP_TASK_END_TICK_EVENT = null;
+    private static LynxMindEndTickEvent<NonTempTask<INonTempType>,INonTempType> NON_TEMP_TASK_END_TICK_EVENT = null;
 
     /// 初始化Baritone任务管理器
     public static void init(){
         MinecraftClient.getInstance().execute(() -> {
-            B_END_TICK_EVENT = new LynxMindEndTickEvent<>();
-            U_END_TICK_EVENT =  new LynxMindEndTickEvent<>();
+            TEMP_TASK_END_TICK_EVENT = new LynxMindEndTickEvent<>();
+            NON_TEMP_TASK_END_TICK_EVENT = new LynxMindEndTickEvent<>();
             ClientTickEvents.END_CLIENT_TICK.register(client -> {
-                if (B_END_TICK_EVENT != null) {
-                    try {
-                        B_END_TICK_EVENT.tick();
-                        U_END_TICK_EVENT.tick();
-                    }
-                    catch (InterruptedException e) {
-                        throw new RuntimeException(e);
-                    }
-                }
+                if(ClientUtils.getPlayer() == null || ClientUtils.getPlayer().getHealth() <= 0) return;
+                TEMP_TASK_END_TICK_EVENT.tick();
+                NON_TEMP_TASK_END_TICK_EVENT.tick();
             });
         });
     }
 
     /// 注册事件
-    public static <U> void registerTask(Task<U> task){
+    public static <T> void registerTask(Task<T> task){
         MinecraftClient.getInstance().execute(() -> {
-            if(task instanceof BTask bTask){
-                B_END_TICK_EVENT.register(bTask);
+            if(task instanceof TempTask<T> tempTask){
+                TEMP_TASK_END_TICK_EVENT.register((TempTask<ITempTaskType>) tempTask);
             }
-            else if(task instanceof UTask uTask){
-                U_END_TICK_EVENT.register(uTask);
+            else if(task instanceof NonTempTask<T> nonTempTask){
+                NON_TEMP_TASK_END_TICK_EVENT.register((NonTempTask<INonTempType>) nonTempTask);
             }
         });
     }
@@ -50,22 +45,22 @@ public class LynxMindEndTickEventManager {
     /// 取消注册事件
     public static <U> void unregisterTask(U taskType, String reason){
         MinecraftClient.getInstance().execute(() -> {
-            if(taskType instanceof BTaskType bTaskType){
-                B_END_TICK_EVENT.unregister(bTaskType,reason);
+            if(taskType instanceof ITempTaskType iTempTaskType){
+                TEMP_TASK_END_TICK_EVENT.unregister(iTempTaskType,reason);
             }
-            else if(taskType instanceof UTaskType uTaskType){
-                U_END_TICK_EVENT.unregister(uTaskType,reason);
+            else if(taskType instanceof INonTempType iNonTempTaskType){
+                NON_TEMP_TASK_END_TICK_EVENT.unregister(iNonTempTaskType,reason);
             }
         });
     }
 
     /// 获取任务
     public static <U> Task<?> getTask(U taskType){
-        if(taskType instanceof BTaskType bTaskType){
-            return B_END_TICK_EVENT.getTask(bTaskType);
+        if(taskType instanceof ITempTaskType bTaskType){
+            return TEMP_TASK_END_TICK_EVENT.getTask(bTaskType);
         }
-        else if(taskType instanceof UTaskType uTaskType){
-            return U_END_TICK_EVENT.getTask(uTaskType);
+        else if(taskType instanceof INonTempType uTaskType){
+            return NON_TEMP_TASK_END_TICK_EVENT.getTask(uTaskType);
         }
         return null;
     }
@@ -73,16 +68,22 @@ public class LynxMindEndTickEventManager {
     public static <U> boolean isTaskActive(U taskType){
         var task = getTask(taskType);
         if(task == null) return false;
-        return task.getCurrentTaskState() == Task.TaskState.IDLE;
+        return task.getCurrentTaskState() == Task.TaskState.IDLE || task.getCurrentTaskState() == Task.TaskState.PAUSED;
     }
 
     /// 清理任务
+    public static void cleanTempTasks(String reason){
+        if(TEMP_TASK_END_TICK_EVENT != null) {
+            TEMP_TASK_END_TICK_EVENT.clean(reason);
+        }
+    }
+    public static void cleanNonTempTasks(String reason){
+        if(NON_TEMP_TASK_END_TICK_EVENT != null) {
+            NON_TEMP_TASK_END_TICK_EVENT.clean(reason);
+        }
+    }
     public static void cleanAllTasks(String reason){
-        if(B_END_TICK_EVENT != null) {
-            B_END_TICK_EVENT.clean(reason);
-        }
-        else if(U_END_TICK_EVENT != null) {
-            U_END_TICK_EVENT.clean(reason);
-        }
+        cleanTempTasks(reason);
+        cleanNonTempTasks(reason);
     }
 }

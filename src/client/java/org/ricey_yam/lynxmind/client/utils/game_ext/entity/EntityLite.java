@@ -8,23 +8,23 @@ import net.minecraft.entity.LivingEntity;
 @Setter
 public class EntityLite {
     private String id;
-    private float maxHealth;
-    private float currentHealth;
+    private float max_health;
+    private float current_health;
     private int x;
     private int y;
     private int z;
     public EntityLite(LivingEntity entity) {
         this.id = EntityUtils.getEntityID(entity);
-        this.currentHealth = entity.getHealth();
-        this.maxHealth = entity.getMaxHealth();
+        this.current_health = entity.getHealth();
+        this.max_health = entity.getMaxHealth();
         this.x = entity.getBlockPos().getX();
         this.y = entity.getBlockPos().getY();
         this.z = entity.getBlockPos().getZ();
     }
     public EntityLite(String id, float maxHealth, float currentHealth, int x, int y, int z) {
         this.id = id;
-        this.maxHealth = maxHealth;
-        this.currentHealth = currentHealth;
+        this.max_health = maxHealth;
+        this.current_health = currentHealth;
         this.x = x;
         this.y = y;
         this.z = z;

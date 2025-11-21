@@ -7,14 +7,7 @@ import org.ricey_yam.lynxmind.client.ai.message.action.sub.PlayerCollectBlockAct
 import org.ricey_yam.lynxmind.client.ai.message.action.sub.PlayerCraftingAction;
 import org.ricey_yam.lynxmind.client.ai.message.action.sub.PlayerMoveAction;
 import org.ricey_yam.lynxmind.client.ai.message.action.sub.StopBaritoneAction;
-import org.ricey_yam.lynxmind.client.ai.message.event.ai.sub.AIControlEvent;
-import org.ricey_yam.lynxmind.client.ai.message.event.ai.sub.AIGetStatusEvent;
-import org.ricey_yam.lynxmind.client.ai.message.event.ai.sub.AIStartEvent;
-import org.ricey_yam.lynxmind.client.ai.message.event.ai.sub.AIStopEvent;
-import org.ricey_yam.lynxmind.client.ai.message.event.player.sub.PlayerCreateTaskEvent;
-import org.ricey_yam.lynxmind.client.ai.message.event.player.sub.PlayerPickupItemEvent;
-import org.ricey_yam.lynxmind.client.ai.message.event.player.sub.PlayerRemoveTaskEvent;
-import org.ricey_yam.lynxmind.client.ai.message.event.player.sub.PlayerStatusHeartBeatEvent;
+import org.ricey_yam.lynxmind.client.ai.message.event.ai.sub.*;
 import org.ricey_yam.lynxmind.client.utils.format.JsonExt;
 
 import java.util.Arrays;
@@ -63,22 +56,6 @@ public class LynxJsonHandler {
             var eventFrom = typeSection.get(1);
             var eventType = typeSection.get(2);
             switch (eventFrom){
-                case "PLAYER" ->{
-                    switch (eventType){
-                        case "CREATE_TASK" ->{
-                            return new TypeToken<PlayerCreateTaskEvent>() {};
-                        }
-                        case "REMOVE_TASK" ->{
-                            return new TypeToken<PlayerRemoveTaskEvent>() {};
-                        }
-                        case "STATUS_HEARTBEAT" -> {
-                            return new TypeToken<PlayerStatusHeartBeatEvent>(){};
-                        }
-                        case "PICKUP_ITEM" ->{
-                            return new TypeToken<PlayerPickupItemEvent>() {};
-                        }
-                    }
-                }
                 case "AI" ->{
                     switch (eventType){
                         case "CONTROL" -> {
@@ -92,6 +69,12 @@ public class LynxJsonHandler {
                         }
                         case "GET_STATUS" -> {
                             return new TypeToken<AIGetStatusEvent>(){};
+                        }
+                        case "NEARBY_BLOCK" -> {
+                            return new TypeToken<AIGetNearbyBlockEvent>(){};
+                        }
+                        case "NEARBY_ENTITY" -> {
+                            return new TypeToken<AIGetNearbyEntityEvent>(){};
                         }
                     }
                 }

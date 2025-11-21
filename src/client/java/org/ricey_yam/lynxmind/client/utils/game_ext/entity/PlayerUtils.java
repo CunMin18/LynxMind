@@ -24,9 +24,10 @@ import org.ricey_yam.lynxmind.client.utils.game_ext.slot.SlotHelper;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
 public class PlayerUtils {
-    /// 是否玩家看向某个位置
+    /// 是否玩家看向某个位置(无视遮挡)
     public static boolean isLookingAt(BlockPos pos) {
         var baritone = BaritoneManager.getClientBaritone();
         if (baritone == null) return false;
@@ -63,6 +64,8 @@ public class PlayerUtils {
         BlockHitResult blockHit = (BlockHitResult) hitResult;
         return blockHit;
     }
+
+    /// 获取玩家选中的方块信息
     public static String getSelectedBlockID() {
         var selectedBlock = getSelectedBlock();
         var id = BlockUtils.getBlockID(selectedBlock);
@@ -130,12 +133,25 @@ public class PlayerUtils {
         }
         else return null;
     }
+    /// 获取玩家光标处物品
+    public static ItemStack getCursorItemStack(){
+        var player = ClientUtils.getPlayer();
+        var screenHandler = player.currentScreenHandler;
+        if (screenHandler != null) {
+            return screenHandler.getCursorStack();
+        }
+        else return null;
+    }
 
     /// 计算旋转角度
     public static Rotation calcLookRotationFromVec3d(PlayerEntity player, BlockPos to) {
         var vec3dForm = player.getEyePos();
         var vec3dTo = VecUtils.getBlockPosCenter(to);
         return TransformUtils.getRotation(vec3dForm, vec3dTo);
+    }
+    public static Rotation calcLookRotationFromVec3d(PlayerEntity player, Vec3d vec3To) {
+        var vec3dForm = player.getEyePos();
+        return TransformUtils.getRotation(vec3dForm, vec3To);
     }
 
     /// 玩家是否有某个物品
@@ -168,43 +184,57 @@ public class PlayerUtils {
         return null;
     }
 
+    /// 根据物品ID获取该物品的攻击间隔
+    public static int getAttackingCooldownTick(String toolId){
+        if(toolId.contains("sword")) return 13;
+        if(toolId.contains("axe")) {
+            if(toolId.contains("wooden") || toolId.contains("stone")) return 25;
+            else if(toolId.contains("iron")) return 22;
+            else if(toolId.contains("gold") || toolId.contains("diamond") || toolId.contains("netheriate")) return 20;
+        }
+        return 5;
+    }
+
     /// 根据要挖掘的方块获取最佳工具
     public static String getBestToolIDInInventory(BlockPos toBreak){
         if(toBreak == null) return null;
         var blockState = BlockUtils.getBlockState(toBreak);
         if(blockState == null) return null;
-        var items = getClientPlayerInventoryItems();
+        List<ItemStack> items = new ArrayList<>(Objects.requireNonNull(getClientPlayerInventoryItems()));
+        var cursorStack = getCursorItemStack();
+        if(cursorStack != null) {
+            items.add(getCursorItemStack());
+        }
         var maxMiningSpeed = -999f;
         ItemStack bestTool = null;
-        if (items != null) {
-            for(var item : items){
-                if(item.isSuitableFor(blockState)){
-                    var miningSpeed = item.getMiningSpeedMultiplier(blockState);
-                    if(miningSpeed > maxMiningSpeed){
-                        maxMiningSpeed = miningSpeed;
-                        bestTool =  item;
-                    }
+        for (var item : items) {
+            if (item.isSuitableFor(blockState)) {
+                var miningSpeed = item.getMiningSpeedMultiplier(blockState);
+                if (miningSpeed > maxMiningSpeed) {
+                    maxMiningSpeed = miningSpeed;
+                    bestTool = item;
                 }
             }
-            return bestTool != null ? ItemUtils.getItemID(bestTool) : null;
         }
-        else return null;
+        return bestTool != null ? ItemUtils.getItemID(bestTool) : null;
     }
 
     /// 获取玩家背包最好的武器
     public static String getBestWeaponIDInInventory(){
-        var items = getClientPlayerInventoryItems();
-        var maxMiningDamage = -999f;
-        ItemStack bestWeapon = null;
-        if (items != null) {
-            for(var item : items){
-                if(item.getDamage() > maxMiningDamage) {
-                    bestWeapon = item;
-                    maxMiningDamage = item.getDamage();
-                }
-            }
-            return bestWeapon != null ? ItemUtils.getItemID(bestWeapon) : null;
+        List<ItemStack> items = new ArrayList<>(Objects.requireNonNull(getClientPlayerInventoryItems()));
+        var cursorStack = getCursorItemStack();
+        if(cursorStack != null) {
+            items.add(getCursorItemStack());
         }
-        else return null;
+        var maxDamage = -999f;
+        ItemStack bestWeapon = null;
+        for (var itemStack : items) {
+            var itemDamage = ItemUtils.getItemAttackingDamage(itemStack);
+            if (itemDamage > maxDamage) {
+                bestWeapon = itemStack;
+                maxDamage = itemDamage;
+            }
+        }
+        return bestWeapon != null ? ItemUtils.getItemID(bestWeapon) : null;
     }
 }

@@ -5,9 +5,8 @@ import lombok.Setter;
 import org.ricey_yam.lynxmind.client.LynxMindClient;
 import org.ricey_yam.lynxmind.client.baritone.BaritoneManager;
 import org.ricey_yam.lynxmind.client.event.LynxMindEndTickEventManager;
-import org.ricey_yam.lynxmind.client.task.baritone.BPathingTask;
+import org.ricey_yam.lynxmind.client.task.temp.baritone.BPathingTask;
 import org.ricey_yam.lynxmind.client.ai.message.action.Action;
-import org.ricey_yam.lynxmind.client.task.baritone.BTaskType;
 
 @Getter
 @Setter

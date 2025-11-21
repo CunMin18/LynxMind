@@ -16,16 +16,16 @@ import java.util.Objects;
 @Setter
 public class AIGetNearbyBlockEvent extends AIEvent {
     private int radius;
-    private List<String> targetBlockID;
-    private AIGetNearbyBlockEvent(int radius, List<String> targetBlockID) {
-        setType(AIEventType.EVENT_AI_GET_NEARBY_BLOCKS);
+    private List<String> target_block_id;
+    private AIGetNearbyBlockEvent(int radius, List<String> target_block_id) {
+        setType(AIEventType.EVENT_AI_GET_NEARBY_BLOCK);
         this.radius = radius;
-        this.targetBlockID = targetBlockID;
+        this.target_block_id = target_block_id;
     }
 
     @Override
     public void onReceive() {
-        var scanBlockEvent = new PlayerScanBlockEvent(radius, targetBlockID);
+        var scanBlockEvent = new PlayerScanBlockEvent(radius, target_block_id);
         var serialized = LynxJsonHandler.serialize(scanBlockEvent);
         Objects.requireNonNull(AIServiceManager.sendAndReceiveReplyAsync(serialized)).whenComplete((reply, error) -> ChatManager.handleAIReply(reply));
     }
