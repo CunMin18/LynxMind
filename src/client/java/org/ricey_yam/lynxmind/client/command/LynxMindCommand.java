@@ -20,7 +20,7 @@ import org.ricey_yam.lynxmind.client.ai.message.event.player.sub.PlayerScanEntit
 import org.ricey_yam.lynxmind.client.event.LynxMindEndTickEventManager;
 import org.ricey_yam.lynxmind.client.task.non_temp.lynx.LTaskType;
 import org.ricey_yam.lynxmind.client.task.non_temp.lynx.sub.LAutoStrikeBackTask;
-import org.ricey_yam.lynxmind.client.task.temp.baritone.BEntityCollectionTask;
+import org.ricey_yam.lynxmind.client.task.temp.action.AEntityCollectionTask;
 import org.ricey_yam.lynxmind.client.utils.game_ext.item.ItemStackLite;
 import org.ricey_yam.lynxmind.client.baritone.BaritoneManager;
 import org.ricey_yam.lynxmind.client.config.AIServiceConfig;
@@ -54,32 +54,32 @@ public class LynxMindCommand {
 
                 .then(CommandManager.literal("run")
                         .then(CommandManager.literal("cancel")
-                                .executes(BaritoneExecutor::stop)
+                                .executes(FakeActionExecutor::stop)
                         )
                         .then(CommandManager.literal("path")
                                 .then(CommandManager.argument("pos", BlockPosArgumentType.blockPos())
-                                        .executes(BaritoneExecutor::pathTo))
+                                        .executes(FakeActionExecutor::pathTo))
                         )
                         .then(CommandManager.literal("mine")
                                 .then(CommandManager.argument("count", IntegerArgumentType.integer())
                                     .then(CommandManager.argument("item_id", StringArgumentType.greedyString())
-                                        .executes(BaritoneExecutor::mine)
+                                        .executes(FakeActionExecutor::mine)
                                     )
                                 )
                         )
                         .then(CommandManager.literal("craft")
                                 .then(CommandManager.argument("count", IntegerArgumentType.integer())
                                         .then(CommandManager.argument("item_id", StringArgumentType.greedyString())
-                                                .executes(BaritoneExecutor::craft))
+                                                .executes(FakeActionExecutor::craft))
                                 )
                         )
                         .then(CommandManager.literal("kfc")
                                 .then(CommandManager.argument("kq_json", StringArgumentType.greedyString())
-                                        .executes(BaritoneExecutor::killingForCollection))
+                                        .executes(FakeActionExecutor::killingForCollection))
                         )
                         .then(CommandManager.literal("murder")
                                 .then(CommandManager.argument("uuids", StringArgumentType.greedyString())
-                                        .executes(BaritoneExecutor::murder))
+                                        .executes(FakeActionExecutor::murder))
                         )
                 )
 
@@ -134,7 +134,7 @@ public class LynxMindCommand {
 
         private static int setTaskForAI(CommandContext<ServerCommandSource> context){
             /// 停止先前的任务
-            AIServiceManager.stopTask("终止了先前任务创建的 BTask");
+            AIServiceManager.stopTask("终止了先前任务创建的 ATask");
 
             var taskDesc = StringArgumentType.getString(context,"你想做什么？");
             AIServiceManager.setCurrentTask(taskDesc);
@@ -172,7 +172,7 @@ public class LynxMindCommand {
             return 1;
         }
     }
-    static class BaritoneExecutor{
+    static class FakeActionExecutor {
         private static int stop(CommandContext<ServerCommandSource> context){
             try{
                 BaritoneManager.stopAllTasks("玩家手动取消了当前任务");
@@ -250,7 +250,7 @@ public class LynxMindCommand {
         private static int killingForCollection(CommandContext<ServerCommandSource> context){
             try {
                 var gson = new Gson();
-                var kqss = StringArgumentType.getString(context,"kq");
+                var kqss = StringArgumentType.getString(context,"kq_json");
                 if (kqss == null || kqss.trim().isEmpty()) {
                     LynxMindClient.sendModMessage("§c错误: 请指定JSON!");
                     return 0;
@@ -260,10 +260,10 @@ public class LynxMindCommand {
                     LynxMindClient.sendModMessage("§c错误: JSON列表不能为空！");
                     return 0;
                 }
-                var kqs = new ArrayList<BEntityCollectionTask.EntityKillingQuota>();
+                var kqs = new ArrayList<AEntityCollectionTask.EntityKillingQuota>();
                 for (int i = 0; i < kq_list.size(); i++) {
                     var kq = kq_list.get(i);
-                    var newKQ = gson.fromJson(kq, BEntityCollectionTask.EntityKillingQuota.class);
+                    var newKQ = gson.fromJson(kq, AEntityCollectionTask.EntityKillingQuota.class);
                     kqs.add(newKQ);
                 }
 

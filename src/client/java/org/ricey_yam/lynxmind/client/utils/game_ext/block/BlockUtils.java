@@ -5,17 +5,24 @@ import net.minecraft.block.BlockState;
 import net.minecraft.block.Blocks;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.entity.LivingEntity;
+import net.minecraft.item.*;
 import net.minecraft.registry.Registries;
+import net.minecraft.registry.tag.BlockTags;
 import net.minecraft.util.Identifier;
+import net.minecraft.util.hit.BlockHitResult;
+import net.minecraft.util.hit.HitResult;
 import net.minecraft.util.math.BlockPos;
-import net.minecraft.world.World;
+import net.minecraft.util.math.Vec3d;
+import net.minecraft.world.RaycastContext;
+import org.ricey_yam.lynxmind.client.utils.game_ext.ClientUtils;
 
 import java.util.*;
+import java.util.function.Predicate;
 
 public class BlockUtils {
     /// 搜索最近的方块的位置
-    public static BlockPos findNearestBlock(LivingEntity livingEntity, List<String> targetBlockIDList, int radius, List<BlockPos> blackList) {
-        if(livingEntity == null || targetBlockIDList == null || targetBlockIDList.isEmpty()) return null;
+    public static BlockPos findNearestBlock(LivingEntity livingEntity, int radius, Predicate<BlockPos> predicate) {
+        if(livingEntity == null) return null;
         var startPos = livingEntity.getBlockPos();
         var world = livingEntity.getEntityWorld();
         Queue<BlockPos> queue = new LinkedList<>();
@@ -29,10 +36,8 @@ public class BlockUtils {
         while (!queue.isEmpty()) {
             BlockPos currentPos = queue.poll();
             var blockName = getBlockID(currentPos);
-            for (String targetName : targetBlockIDList) {
-                if (targetName.equals(blockName) && !blackList.contains(currentPos)) {
-                    return currentPos;
-                }
+            if (predicate.test(currentPos)) {
+                return currentPos;
             }
             if (currentPos.getManhattanDistance(startPos) > radius) {
                 continue;
@@ -48,17 +53,14 @@ public class BlockUtils {
 
         return null;
     }
-    public static BlockPos findNearestBlock(LivingEntity livingEntity, List<String> targetBlockIDList, int radius){
-        return findNearestBlock(livingEntity, targetBlockIDList,radius,List.of());
-    }
 
     /// 扫描附近的全部方块
     public static List<BlockLite> scanAllBlocks(LivingEntity livingEntity,List<String> targetBlockIDList, int radius){
         var entityPos = livingEntity.getBlockPos();
         var result = new ArrayList<BlockLite>();
-        for (int x = -radius; x < radius; x++) {
-            for (int y = -radius; y < radius; y++) {
-                for (int z = -radius; z < radius; z++) {
+        for (int x = -radius; x <= radius; x++) {
+            for (int y = -radius; y <= radius; y++) {
+                for (int z = -radius; z <= radius; z++) {
                     var pos = entityPos.add(x, y, z);
                     var blockState = BlockUtils.getBlockState(pos);
                     if(targetBlockIDList.contains(BlockUtils.getBlockID(pos))){
@@ -70,34 +72,20 @@ public class BlockUtils {
         return result;
     }
 
-    /// 寻找工作台的放置点
+    /// 寻找最近的工作台的放置点
     public static BlockPos findCraftingTablePlacePoint(LivingEntity livingEntity, int range) {
-        MinecraftClient client = MinecraftClient.getInstance();
-        if (client == null || client.world == null) return null;
-
-        BlockPos playerPos = livingEntity.getBlockPos();
-        BlockPos bestPos = null;
-
-        for (int dx = -range; dx <= range; dx++) {
-            for (int dy = 0; dy <= 1; dy++) {
-                for (int dz = -range; dz <= range; dz++) {
-                    BlockPos pos = playerPos.add(dx, dy, dz);
-                    World world = client.world;
-
-                    if (!world.isInBuildLimit(pos)) {
-                        continue;
-                    }
-
-                    if (!isInRange(playerPos, pos, range)) {
-                        continue;
-                    }
-
-                    BlockState targetState = world.getBlockState(pos);
-                    if(Blocks.CRAFTING_TABLE.getDefaultState().canPlaceAt(world, pos)) return pos;
-                }
-            }
-        }
-        return null;
+        var world = ClientUtils.getWorld();
+        return findNearestBlock(livingEntity, range,pos -> {
+            var state = Objects.requireNonNull(BlockUtils.getBlockState(pos));
+            var upState = Objects.requireNonNull(BlockUtils.getBlockState(pos.up()));
+            return Blocks.CRAFTING_TABLE.getDefaultState().canPlaceAt(world, pos) &&
+                    world.isInBuildLimit(pos) &&
+                    isInRange(livingEntity.getBlockPos(), pos, range) &&
+                    !isInRange(livingEntity.getBlockPos(), pos, 1) &&
+                    Math.abs(pos.getY() - livingEntity.getBlockPos().getY()) <= 1 &&
+                    upState.isAir() &&
+                    state.isSolidBlock(world, pos);
+        });
     }
 
     /// 校验位置是否在 range 范围内（欧氏距离）
@@ -136,4 +124,7 @@ public class BlockUtils {
         return blockId.toString();
     }
 
+    public static boolean isPickaxeRequired(BlockState blockState) {
+        return blockState.isIn(BlockTags.PICKAXE_MINEABLE);
+    }
 }

@@ -2,6 +2,7 @@ package org.ricey_yam.lynxmind.client.ai.message.event.ai.sub;
 
 import lombok.Getter;
 import lombok.Setter;
+import org.ricey_yam.lynxmind.client.LynxMindClient;
 import org.ricey_yam.lynxmind.client.ai.AIServiceManager;
 import org.ricey_yam.lynxmind.client.ai.ChatManager;
 import org.ricey_yam.lynxmind.client.ai.LynxJsonHandler;
@@ -25,6 +26,7 @@ public class AIGetNearbyBlockEvent extends AIEvent {
 
     @Override
     public void onReceive() {
+        LynxMindClient.sendModMessage("AI正在扫描周边方块.....");
         var scanBlockEvent = new PlayerScanBlockEvent(radius, target_block_id);
         var serialized = LynxJsonHandler.serialize(scanBlockEvent);
         Objects.requireNonNull(AIServiceManager.sendAndReceiveReplyAsync(serialized)).whenComplete((reply, error) -> ChatManager.handleAIReply(reply));

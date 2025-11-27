@@ -56,11 +56,11 @@ public class LynxMindEndTickEventManager {
 
     /// 获取任务
     public static <U> Task<?> getTask(U taskType){
-        if(taskType instanceof ITempTaskType bTaskType){
-            return TEMP_TASK_END_TICK_EVENT.getTask(bTaskType);
+        if(taskType instanceof ITempTaskType tempTaskType){
+            return TEMP_TASK_END_TICK_EVENT.getTask(tempTaskType);
         }
-        else if(taskType instanceof INonTempType uTaskType){
-            return NON_TEMP_TASK_END_TICK_EVENT.getTask(uTaskType);
+        else if(taskType instanceof INonTempType nonTempTaskType){
+            return NON_TEMP_TASK_END_TICK_EVENT.getTask(nonTempTaskType);
         }
         return null;
     }

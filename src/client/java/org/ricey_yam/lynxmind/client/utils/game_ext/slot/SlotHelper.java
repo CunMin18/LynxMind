@@ -60,7 +60,7 @@ public class SlotHelper {
      * @param slotId 槽位 ID（从 0 开始）
      * @return 槽位中的 ItemStack，如果槽位不存在或无物品则返回空栈
      */
-    public static ItemStack getSlotItem(int slotId) {
+    public static ItemStack getSlotStack(int slotId) {
         if (slotId < 0) {
             return ItemStack.EMPTY;
         }
@@ -75,7 +75,7 @@ public class SlotHelper {
      * 判断某个槽位是否为空
      */
     public static boolean isSlotEmpty(int slotId) {
-        return getSlotItem(slotId).isEmpty();
+        return getSlotStack(slotId).isEmpty();
     }
 
     public static LSlot getLSlotInstanceByType(int slotId, ComplexContainerType complexContainerType, LSlotType actionType){

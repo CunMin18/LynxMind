@@ -16,11 +16,14 @@ public class LynxMindClient implements ClientModInitializer {
         /// 加载全部配置文件
         ConfigManager.init();
 
-        /// 初始化Baritone任务管理器
+        /// 初始化Task管理器
         LynxMindEndTickEventManager.init();
 
         /// 注册命令
         ModCommand.registerCommands();
+
+        /// test only
+        LynxMindBrain.wake();
     }
 
     /// 发送信息到玩家聊天栏并添加日志输出

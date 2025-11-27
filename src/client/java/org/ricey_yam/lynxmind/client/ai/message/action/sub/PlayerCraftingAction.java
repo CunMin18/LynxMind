@@ -5,10 +5,10 @@ import lombok.Getter;
 import lombok.Setter;
 import org.ricey_yam.lynxmind.client.LynxMindClient;
 import org.ricey_yam.lynxmind.client.ai.message.action.Action;
+import org.ricey_yam.lynxmind.client.task.temp.action.ACraftingTask;
 import org.ricey_yam.lynxmind.client.utils.game_ext.item.ItemStackLite;
 import org.ricey_yam.lynxmind.client.baritone.BaritoneManager;
 import org.ricey_yam.lynxmind.client.event.LynxMindEndTickEventManager;
-import org.ricey_yam.lynxmind.client.task.temp.baritone.BCraftingTask;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -35,7 +35,7 @@ public class PlayerCraftingAction extends Action {
                 LynxMindClient.sendModMessage("§c错误: 物品ID列表不能为空！");
                 return false;
             }
-            var baritoneCraftingTask = new BCraftingTask(this.to_craft,this);
+            var baritoneCraftingTask = new ACraftingTask(this.to_craft,this);
             LynxMindEndTickEventManager.registerTask(baritoneCraftingTask);
             return super.invoke();
         }

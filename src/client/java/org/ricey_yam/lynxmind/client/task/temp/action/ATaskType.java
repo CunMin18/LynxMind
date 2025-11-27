@@ -1,13 +1,12 @@
-package org.ricey_yam.lynxmind.client.task.temp.baritone;
+package org.ricey_yam.lynxmind.client.task.temp.action;
 
 
 import org.ricey_yam.lynxmind.client.task.temp.ITempTaskType;
 
-public enum BTaskType implements ITempTaskType {
+public enum ATaskType implements ITempTaskType {
     BLOCK_COLLECTION,
     ENTITY_COLLECTION,
     PATHING,
     CRAFTING,
-    KILLAURA,
     MURDER
 }

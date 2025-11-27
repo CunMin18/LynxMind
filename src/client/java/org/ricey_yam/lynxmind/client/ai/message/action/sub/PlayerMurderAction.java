@@ -5,8 +5,7 @@ import lombok.Setter;
 import org.ricey_yam.lynxmind.client.ai.message.action.Action;
 import org.ricey_yam.lynxmind.client.baritone.BaritoneManager;
 import org.ricey_yam.lynxmind.client.event.LynxMindEndTickEventManager;
-import org.ricey_yam.lynxmind.client.task.temp.baritone.BEntityCollectionTask;
-import org.ricey_yam.lynxmind.client.task.temp.baritone.BMurderTask;
+import org.ricey_yam.lynxmind.client.task.temp.action.AMurderTask;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -28,7 +27,7 @@ public class PlayerMurderAction extends Action {
             var uuid = UUID.fromString(uuid_str);
             uuids.add(uuid);
         }
-        var newMurderTask = new BMurderTask(uuids,this);
+        var newMurderTask = new AMurderTask(uuids,this);
         LynxMindEndTickEventManager.registerTask(newMurderTask);
         return super.invoke();
     }

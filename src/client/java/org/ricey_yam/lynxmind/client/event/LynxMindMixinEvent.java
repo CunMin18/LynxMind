@@ -5,10 +5,10 @@ import org.ricey_yam.lynxmind.client.ai.AIServiceManager;
 import org.ricey_yam.lynxmind.client.ai.ChatManager;
 import org.ricey_yam.lynxmind.client.ai.LynxJsonHandler;
 import org.ricey_yam.lynxmind.client.ai.message.event.player.sub.PlayerPickupItemEvent;
-import org.ricey_yam.lynxmind.client.task.temp.baritone.BBlockCollectionTask;
-import org.ricey_yam.lynxmind.client.task.temp.baritone.BEntityCollectionTask;
-import org.ricey_yam.lynxmind.client.task.temp.baritone.BMurderTask;
-import org.ricey_yam.lynxmind.client.task.temp.baritone.BTaskType;
+import org.ricey_yam.lynxmind.client.task.non_temp.lynx.sub.LFunctionHubTask;
+import org.ricey_yam.lynxmind.client.task.temp.action.*;
+import org.ricey_yam.lynxmind.client.task.temp.action.AEntityCollectionTask;
+import org.ricey_yam.lynxmind.client.task.temp.action.AMurderTask;
 import org.ricey_yam.lynxmind.client.utils.game_ext.entity.EntityUtils;
 
 import java.util.Objects;
@@ -22,13 +22,13 @@ public class LynxMindMixinEvent {
             Objects.requireNonNull(AIServiceManager.sendAndReceiveReplyAsync(serialized)).whenComplete((reply, throwable) -> ChatManager.handleAIReply(reply));
         }
 
-        /// 更新Baritone收集任务状态
-        if(LynxMindEndTickEventManager.isTaskActive(BTaskType.BLOCK_COLLECTION)){
-            var bCT = (BBlockCollectionTask) LynxMindEndTickEventManager.getTask(BTaskType.BLOCK_COLLECTION);
-            if(bCT != null) bCT.onItemCollected(itemID,count);
+        /// 更新ATask收集状态
+        if(LynxMindEndTickEventManager.isTaskActive(ATaskType.BLOCK_COLLECTION)){
+            var bCT = (ABlockCollectionTask) LynxMindEndTickEventManager.getTask(ATaskType.BLOCK_COLLECTION);
+            if(bCT != null) bCT.onBlockDropCollected(itemID,count);
         }
-        if(LynxMindEndTickEventManager.isTaskActive(BTaskType.ENTITY_COLLECTION)){
-            var eCT = (BEntityCollectionTask) LynxMindEndTickEventManager.getTask(BTaskType.ENTITY_COLLECTION);
+        if(LynxMindEndTickEventManager.isTaskActive(ATaskType.ENTITY_COLLECTION)){
+            var eCT = (AEntityCollectionTask) LynxMindEndTickEventManager.getTask(ATaskType.ENTITY_COLLECTION);
             if(eCT != null && eCT.getKillingQuotas() != null && !eCT.getKillingQuotas().isEmpty()) {
                 for (int i = 0; i < eCT.getKillingQuotas().size(); i++) {
                     var quota = eCT.getKillingQuotas().get(i);
@@ -54,16 +54,22 @@ public class LynxMindMixinEvent {
     public static void onPlayerKillEntity(LivingEntity killedEntity){
         var killedEntityID = EntityUtils.getEntityID(killedEntity);
         var killedEntityUUID = killedEntity.getUuid();
+        var attackSubTask = Objects.requireNonNull(LFunctionHubTask.getActiveTask()).getAttackSubTask();
 
-        /// 更新BTask状态
-        if(LynxMindEndTickEventManager.isTaskActive(BTaskType.ENTITY_COLLECTION)){
-            var eCT = (BEntityCollectionTask) LynxMindEndTickEventManager.getTask(BTaskType.ENTITY_COLLECTION);
+        /// 更新功能枢纽状态
+        if(attackSubTask.getAttackTargetList() != null){
+            attackSubTask.getAttackTargetList().remove(killedEntity.getUuid());
+        }
+
+        /// 更新ATask状态
+        if(LynxMindEndTickEventManager.isTaskActive(ATaskType.ENTITY_COLLECTION)){
+            var eCT = (AEntityCollectionTask) LynxMindEndTickEventManager.getTask(ATaskType.ENTITY_COLLECTION);
             if(eCT != null && eCT.getKillingQuotas() != null && !eCT.getKillingQuotas().isEmpty()) {
                 eCT.transitionToFindingLoot();
             }
         }
-        if(LynxMindEndTickEventManager.isTaskActive(BTaskType.MURDER)){
-            var mCT = (BMurderTask) LynxMindEndTickEventManager.getTask(BTaskType.MURDER);
+        if(LynxMindEndTickEventManager.isTaskActive(ATaskType.MURDER)){
+            var mCT = (AMurderTask) LynxMindEndTickEventManager.getTask(ATaskType.MURDER);
             if(mCT != null && mCT.getMurderTargetUUIDs() != null && !mCT.getMurderTargetUUIDs().isEmpty()) {
                 mCT.getMurderTargetUUIDs().remove(killedEntityUUID);
             }

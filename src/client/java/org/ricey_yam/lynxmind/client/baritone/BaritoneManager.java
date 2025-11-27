@@ -10,10 +10,13 @@ import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.network.ClientPlayerEntity;
 import org.ricey_yam.lynxmind.client.baritone.status.sub.*;
 import org.ricey_yam.lynxmind.client.event.LynxMindEndTickEventManager;
-import org.ricey_yam.lynxmind.client.task.temp.baritone.BBlockCollectionTask;
+import org.ricey_yam.lynxmind.client.task.non_temp.lynx.sub.LFunctionHubTask;
+import org.ricey_yam.lynxmind.client.task.temp.action.ABlockCollectionTask;
 import org.ricey_yam.lynxmind.client.baritone.status.BStatus;
-import org.ricey_yam.lynxmind.client.task.temp.baritone.BCraftingTask;
-import org.ricey_yam.lynxmind.client.task.temp.baritone.BTaskType;
+import org.ricey_yam.lynxmind.client.task.temp.action.ACraftingTask;
+import org.ricey_yam.lynxmind.client.task.temp.action.ATaskType;
+
+import java.util.Objects;
 
 @Getter
 @Setter
@@ -45,34 +48,35 @@ public class BaritoneManager {
         }
         /// 收集
         if(isBlockCollectionTaskActive()){
-            var collectingTask = LynxMindEndTickEventManager.getTask(BTaskType.BLOCK_COLLECTION);
-            if(collectingTask instanceof BBlockCollectionTask bCT){
-                if(bCT.getCurrentTargetBlockPos() != null){
+            var task = LynxMindEndTickEventManager.getTask(ATaskType.BLOCK_COLLECTION);
+            if(task instanceof ABlockCollectionTask collectionTask){
+                if(collectionTask.getCurrentTargetBlockPos() != null){
 
                     var isNeededBlock = false;
-                    for(var item : bCT.getNeededItem()){
+                    var miningBlockID = Objects.requireNonNull(LFunctionHubTask.getActiveTask()).getMineSubTask().getMiningBlockID();
+                    for(var item : collectionTask.getNeededItem()){
                         if(item == null) continue;
-                        if (item.getItem_name().equals(bCT.getMiningBlockName())) {
+                        if (item.getItem_name().equals(miningBlockID)) {
                             isNeededBlock = true;
                             break;
                         }
                     }
-                    var miningNeededBlock = bCT.getCollectingState() == BBlockCollectionTask.CollectingState.MINING_BLOCK && isNeededBlock;
-                    var miningUnneededBlock = bCT.getCollectingState() == BBlockCollectionTask.CollectingState.MINING_BLOCK && !isNeededBlock;
+                    var miningNeededBlock = collectionTask.getCollectingState() == ABlockCollectionTask.CollectingState.MINING_BLOCK && isNeededBlock;
+                    var miningUnneededBlock = collectionTask.getCollectingState() == ABlockCollectionTask.CollectingState.MINING_BLOCK && !isNeededBlock;
                     if(miningNeededBlock){
-                        return new BMiningStatus(bCT.getMiningBlockName());
+                        return new BMiningStatus(miningBlockID);
                     }
-                    else if(bCT.getCollectingState() == BBlockCollectionTask.CollectingState.MOVING_TO_BLOCK || miningUnneededBlock){
-                        return new BFindingNeededBlocksStatus(bCT.getCurrentTargetBlockPos(),bCT.getNeededItem());
+                    else if(collectionTask.getCollectingState() == ABlockCollectionTask.CollectingState.MOVING_TO_BLOCK || miningUnneededBlock){
+                        return new BFindingNeededBlocksStatus(collectionTask.getCurrentTargetBlockPos(),collectionTask.getNeededItem());
                     }
                 }
             }
         }
         /// 制作
         if(isCraftingTaskActive()){
-            var craftingTask = LynxMindEndTickEventManager.getTask(BTaskType.CRAFTING);
-            if(craftingTask instanceof BCraftingTask bCT){
-                return new BCraftingStatus(bCT.getTo_craft(),bCT.getCraft_failed(),bCT.getCraft_success());
+            var task = LynxMindEndTickEventManager.getTask(ATaskType.CRAFTING);
+            if(task instanceof ACraftingTask craftingTask){
+                return new BCraftingStatus(craftingTask.getTo_craft(),craftingTask.getCraft_failed(),craftingTask.getCraft_success());
             }
         }
         return new BStatus();
@@ -85,22 +89,22 @@ public class BaritoneManager {
 
     /// 停止所有需要寻路的BTask
     public static void stopPathingRelatedTasks(String reason) {
-        LynxMindEndTickEventManager.unregisterTask(BTaskType.PATHING,reason);
-        LynxMindEndTickEventManager.unregisterTask(BTaskType.BLOCK_COLLECTION,reason);
-        LynxMindEndTickEventManager.unregisterTask(BTaskType.CRAFTING,reason);
-        LynxMindEndTickEventManager.unregisterTask(BTaskType.ENTITY_COLLECTION,reason);
-        LynxMindEndTickEventManager.unregisterTask(BTaskType.MURDER,reason);
+        LynxMindEndTickEventManager.unregisterTask(ATaskType.PATHING,reason);
+        LynxMindEndTickEventManager.unregisterTask(ATaskType.BLOCK_COLLECTION,reason);
+        LynxMindEndTickEventManager.unregisterTask(ATaskType.CRAFTING,reason);
+        LynxMindEndTickEventManager.unregisterTask(ATaskType.ENTITY_COLLECTION,reason);
+        LynxMindEndTickEventManager.unregisterTask(ATaskType.MURDER,reason);
     }
 
     public static boolean isPathingTaskActive(){
-        return LynxMindEndTickEventManager.isTaskActive(BTaskType.PATHING);
+        return LynxMindEndTickEventManager.isTaskActive(ATaskType.PATHING);
     }
 
     public static boolean isBlockCollectionTaskActive(){
-        return LynxMindEndTickEventManager.isTaskActive(BTaskType.BLOCK_COLLECTION);
+        return LynxMindEndTickEventManager.isTaskActive(ATaskType.BLOCK_COLLECTION);
     }
 
     public static boolean isCraftingTaskActive(){
-        return LynxMindEndTickEventManager.isTaskActive(BTaskType.CRAFTING);
+        return LynxMindEndTickEventManager.isTaskActive(ATaskType.CRAFTING);
     }
 }

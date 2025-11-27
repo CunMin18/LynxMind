@@ -5,7 +5,7 @@ import lombok.Setter;
 import org.ricey_yam.lynxmind.client.LynxMindClient;
 import org.ricey_yam.lynxmind.client.baritone.BaritoneManager;
 import org.ricey_yam.lynxmind.client.event.LynxMindEndTickEventManager;
-import org.ricey_yam.lynxmind.client.task.temp.baritone.BPathingTask;
+import org.ricey_yam.lynxmind.client.task.temp.action.APathingTask;
 import org.ricey_yam.lynxmind.client.ai.message.action.Action;
 
 @Getter
@@ -28,7 +28,7 @@ public class PlayerMoveAction extends Action {
             /// 先停下其他动作
             BaritoneManager.stopPathingRelatedTasks("取消其他自带寻路的Task");
             /// 创建寻路任务
-            var newPathingTask = new BPathingTask(x, y, z,this);
+            var newPathingTask = new APathingTask(x, y, z,this);
             LynxMindEndTickEventManager.registerTask(newPathingTask);
             LynxMindClient.sendModMessage("正在寻路到[" + x + "," + y + "," + z + "]");
             return super.invoke();

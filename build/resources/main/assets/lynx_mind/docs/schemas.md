@@ -88,7 +88,7 @@ LynxMind 项目的 JSON Schema 定义与事件规范。这份文档详细说明�
 *   **何时使用**: AI 打算收集某些材料 但不清楚玩家周边情况时。
 *   **包含内容**: 
   - `radius` 搜寻的范围 不要给太大 否则会加剧性能负担!
-  - `target_block_id` 你要搜寻的方块ID
+  - `target_block_id` 你要搜寻的方块ID 请不要扫描非稀有物品(如`stone`等)
 *   **示例**:
 ```json
 {
@@ -220,14 +220,14 @@ LynxMind 项目的 JSON Schema 定义与事件规范。这份文档详细说明�
              - `LSlotType.INVENTORY_HOTBAR` `0-8`
              - `LSlotType.INVENTORY_EQUIPMENT` `0-3 依次为头盔/胸甲/护腿/靴子` `4 副手`
          - `complexContainerType` 工具变量，无需在意
-      - `current_baritone_task` 当前 Baritone 正在进行的动作  
+      - `current_baritone_status` 当前 Baritone 的状态(正在进行的工作)
       - `nearby_entities` 附近15格的实体 (任意类型)
-- **`current_baritone_task`包含的类型**
+- **`current_baritone_status`包含的类型**
   -  #### 无动作(`NONE`)
   ```json
   {
     //...
-    "current_baritone_task":
+    "current_baritone_status":
     {
       "type": "NONE"
     },
@@ -239,7 +239,7 @@ LynxMind 项目的 JSON Schema 定义与事件规范。这份文档详细说明�
   ```json
   {
     //...
-    "current_baritone_task":
+    "current_baritone_status":
     {
       "type": "BSTATUS_MINING",
       "mining_block_name": "minecraft:diamond_ore"
@@ -254,7 +254,7 @@ LynxMind 项目的 JSON Schema 定义与事件规范。这份文档详细说明�
   ```json
   {
     //...
-    "current_baritone_task":
+    "current_baritone_status":
     {
       "type": "BSTATUS_FINDING_NEEDED_BLOCKS",
       "needed_blocks": [
@@ -280,7 +280,7 @@ LynxMind 项目的 JSON Schema 定义与事件规范。这份文档详细说明�
   ```json
   {
     //...
-    "current_baritone_task":
+    "current_baritone_status":
     {
       "type": "BSTATUS_CRAFTING",
       "to_crafting": [
@@ -318,7 +318,7 @@ LynxMind 项目的 JSON Schema 定义与事件规范。这份文档详细说明�
   ```json
   {
     //...
-    "current_baritone_task":
+    "current_baritone_status":
     {
       "type": "BSTATUS_PATHING_TO_GOAL",
       "x": 100,
@@ -333,7 +333,7 @@ LynxMind 项目的 JSON Schema 定义与事件规范。这份文档详细说明�
   ```json
   {
     //...
-    "current_baritone_task":
+    "current_baritone_status":
     {
       "type": "BSTATUS_PATHING_TO_XZ",
       "x": 126,
@@ -453,7 +453,7 @@ LynxMind 项目的 JSON Schema 定义与事件规范。这份文档详细说明�
       "complexContainerType": "ComplexContainerType.PLAYER_INFO"
     },
   ],
-  "current_baritone_task": {
+  "current_baritone_status": {
     "type": "BSTATUS_FINDING_NEEDED_BLOCKS",
     "needed_blocks": [
       {
@@ -511,17 +511,17 @@ LynxMind 项目的 JSON Schema 定义与事件规范。这份文档详细说明�
   "count": 64
 }
 ```
-#### 2.2.4 玩家Baritone任务`BTASK`取消事件 (`EVENT_PLAYER_BARITONE_TASK_STOP`)
-- **作用**: 告诉AI Baritone的某个TASK`BTASK`被取消了（比如寻路/收集TASK，不是玩家布置给AI的任务），便于告知AI Baritone任务执行的结果，让AI进行下一步操作。
+#### 2.2.4 玩家Action任务`ATask`取消事件 (`EVENT_PLAYER_ATASK_STOP`)
+- **作用**: 告诉AI Baritone的某个`ATask`被取消了（比如寻路/收集TASK，不是玩家布置给AI的任务），便于告知AI Baritone任务执行的结果，让AI进行下一步操作。
 - **系统何时发送**：
-    - `BTASK`因各种原因被取消
+    - `ATask`因各种原因被取消
 - **包含信息**:
     - `reason` 取消的原因
-    - `linked_action` 与之相关联的Action（该`BTASK`由AI给出的`Action`创建，便于AI了解被取消的`BTASK`（先前AI创建的`Action`）内容）
+    - `linked_action` 与之相关联的Action（该`ATask`由AI给出的`Action`创建，便于AI了解被取消的`ATask`（先前AI创建的`Action`）内容）
 - **示例:**
 ```json
 {
-  "type": "EVENT_PLAYER_BARITONE_TASK_STOP",
+  "type": "EVENT_PLAYER_ATASK_STOP",
   "reason": "已到达目的地",
   "linked_action": 
   {
@@ -540,6 +540,7 @@ LynxMind 项目的 JSON Schema 定义与事件规范。这份文档详细说明�
     - `radius` 扫描范围(AI指定)
     - `scanning_id` 需要扫描的方块ID(AI指定)
     - `nearby_blocks` 扫描的结果
+    - `summary` 概括(如果扫描结果过长会将`nearby_blocks`内容清空,然后将扫描结果通过`summary`简要概括)
 - **示例:**
 
 ```json
@@ -550,6 +551,7 @@ LynxMind 项目的 JSON Schema 定义与事件规范。这份文档详细说明�
     "minecraft:diamond_ore",
     "minecraft:gold_ore"
   ],
+  "summary": "",
   "nearby_blocks": [
     {
       "id": "minecraft:diamond_ore",
@@ -626,17 +628,17 @@ LynxMind 项目的 JSON Schema 定义与事件规范。这份文档详细说明�
 ```
 
 ## 3. 支持的动作类型 (`Action`)
-名词解释`BTASK`:Baritone创建的工作（如寻路到某个位置/收集某些材料等）
-### 3.2 停下 Baritone 的当前工作（停下全部`BTASK`）(`ACTION_STOP_BARITONE`)
-- **作用**: Baritone 一般不会同时多项任务，该动作可使 Baritone 停下当前`BTASK`。
+名词解释`ATask`:Action创建的任务（如寻路到某个位置/收集某些材料等）
+### 3.2 停下 Baritone 的当前工作（停下全部`ATask`）(`ACTION_STOP_BARITONE`)
+- **作用**: Baritone 一般不会同时多项任务，该动作可停下当前`ATask`。
 - **示例**:
 ```json
 {
-  "type": "ACTION_STOP_BARITONE",
+  "type": "ACTION_STOP_ATASK",
 }
 ```
 ### 3.2 移动(`ACTION_MOVE`)
-- **作用**: 利用 Baritone 创建`BTASK`让角色寻路到指定点
+- **作用**: 利用 Baritone 的功能 创建`ATask`让角色寻路到指定点
 - **包含信息**: `x`/`y`/`z` 目标点位置
 - **示例**:
 ```json
@@ -648,10 +650,11 @@ LynxMind 项目的 JSON Schema 定义与事件规范。这份文档详细说明�
 }
 ```
 ### 3.3 玩家收集方块事件(`ACTION_COLLECT_BLOCK`)
-- **作用**: 利用 Baritone 创建`BTASK`让角色自动寻路到指定方块并切换合适的工具挖掉，最后收集掉落物，该 `Action` 对应的`BTASK`会在完成收集任务后自动停止！
+- **作用**: 利用 Baritone 的功能 创建`ATask`让角色自动寻路到指定方块并切换合适的工具挖掉，最后收集掉落物，该 `Action` 对应的`ATask`会在完成收集任务后自动停止！
+- **特别注意**: 指定方块ID前请确保玩家背包内有能够采集该方块的工具!否则Baritone将无法采集该方块!
 - **包含信息**: 
   - `needed_blocks` 需要收集的物品信息  
-      - `name`: 需要收集的物品昵称
+      - `name`: 需要收集的物品ID
       - `count`：需要收集的数量
 - **示例**:
 ```json
@@ -674,7 +677,7 @@ LynxMind 项目的 JSON Schema 定义与事件规范。这份文档详细说明�
 }
 ```
 ### 3.4 玩家制作物品事件(`ACTION_CRAFTING`)
-- **作用**: 利用 Baritone 创建`BTASK`让角色自动制作物品（在材料充足的情况下）（如果需要工作台，Baritone会自动寻找或自己制作），该 `Action` 对应的`BTASK`会在制作完全部物品（无论成功或失败）后自动停止！
+- **作用**: 利用 Baritone 的功能 创建`ATask`让角色自动制作物品（在材料充足的情况下）（如果需要工作台，Baritone会自动寻找或自己制作），该 `Action` 对应的`ATask`会在制作完全部物品（无论成功或失败）后自动停止！
 - **包含信息**:
 - `to_craft` 需要制作的物品信息
   - `name`: 需要制作的物品ID
@@ -705,7 +708,6 @@ LynxMind 项目的 JSON Schema 定义与事件规范。这份文档详细说明�
 - 你操控的玩家已经自动开启杀戮光环(Killaura),Killaura会让玩家攻击靠近自身的(以玩家为攻击目标/在反击名单内)生物.这说明你不用再操心旁边的野怪,你也可以手动添加你想要攻击的目标(UUID).
 - 关于物品标签：
     - `log` 对应任意类型的原木 如果你不知道周边情况且需要原木，**强烈建议**在`ACTION_COLLECT_BLOCK`传入.
-- 目前你操控的玩家是生存模式，你必须了解全部MC知识，确保某些方块需要特定工具才能被破坏并产生掉落物，以及，某些方块需要破坏特定的方块才能获得！
 - 制作物品需要材料充足，否则就无法制作，AI必须了解玩家背包有哪些物品再使用Baritone制作！
 - `ACTION_CRAFTING`中需要制作物品的ID必须精确！比如：需要合成橡木木板时物品ID为(`minecraft:oak_planks`)
 - 若因忘记格式被提醒，可直接回复空消息，或等待接收玩家状态消息后再做决策.

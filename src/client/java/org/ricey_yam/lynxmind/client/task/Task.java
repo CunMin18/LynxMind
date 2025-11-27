@@ -21,8 +21,7 @@ public abstract class Task<T> {
     }
     public enum TaskState{
         IDLE,
-        FINISHED,
-        PAUSED,
-        FAILED
+        STOPPED,
+        PAUSED
     }
 }

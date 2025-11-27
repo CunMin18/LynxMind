@@ -4,5 +4,7 @@ import org.ricey_yam.lynxmind.client.task.non_temp.INonTempType;
 
 public enum LTaskType implements INonTempType {
     AUTO_HEARTBEAT,
-    AUTO_STRIKE_BACK
+    AUTO_STRIKE_BACK,
+    FUNCTION_HUB,
+    AUTO_GEAR_SWITCHER
 }

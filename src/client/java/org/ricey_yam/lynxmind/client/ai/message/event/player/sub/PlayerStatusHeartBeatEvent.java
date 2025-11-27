@@ -36,7 +36,7 @@ public class PlayerStatusHeartBeatEvent extends PlayerEvent {
     private List<SlotItemStack> inventory_inner;
     private List<SlotItemStack> inventory_equipment;
 
-    private BStatus current_baritone_task;
+    private BStatus current_baritone_status;
 
     private PlayerScanEntityEvent nearby_entities;
 
@@ -61,7 +61,11 @@ public class PlayerStatusHeartBeatEvent extends PlayerEvent {
         this.inventory_inner =  PlayerUtils.getClientPlayerInventoryItems(LSlotType.INVENTORY_INNER,ComplexContainerType.PLAYER_INFO);
         this.inventory_equipment = PlayerUtils.getClientPlayerInventoryItems(LSlotType.INVENTORY_EQUIPMENT,ComplexContainerType.PLAYER_INFO);
 
-        this.current_baritone_task = BaritoneManager.getCurrentBStatus();
+        this.inventory_hotbar.removeIf(slotItemStack -> slotItemStack.getItem_stack().getItem_name().contains("air") || slotItemStack.getItem_stack().getCount() <= 0);
+        this.inventory_inner.removeIf(slotItemStack -> slotItemStack.getItem_stack().getItem_name().contains("air") || slotItemStack.getItem_stack().getCount() <= 0);
+        this.inventory_equipment.removeIf(slotItemStack -> slotItemStack.getItem_stack().getItem_name().contains("air") || slotItemStack.getItem_stack().getCount() <= 0);
+
+        this.current_baritone_status = BaritoneManager.getCurrentBStatus();
 
         this.nearby_entities = new PlayerScanEntityEvent(15,List.of());
     }

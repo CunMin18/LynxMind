@@ -4,8 +4,11 @@ import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gui.screen.ChatScreen;
 import net.minecraft.client.gui.screen.GameMenuScreen;
 import net.minecraft.client.gui.screen.Screen;
+import net.minecraft.client.gui.screen.ingame.GenericContainerScreen;
 import net.minecraft.client.gui.screen.option.GameOptionsScreen;
 import net.minecraft.entity.player.PlayerEntity;
+import net.minecraft.screen.GenericContainerScreenHandler;
+import net.minecraft.screen.ScreenHandler;
 
 import java.lang.reflect.Constructor;
 
@@ -19,8 +22,12 @@ public class ContainerHelper {
     }
     public static boolean isContainerOpen(Class<? extends Screen> targetMenuClass) {
         var client = MinecraftClient.getInstance();
-        if (client == null || client.player == null) {
+        if (client == null || client.player == null || client.currentScreen == null) {
             return false;
+        }
+        if(targetMenuClass.equals(GenericContainerScreen.class) && client.currentScreen instanceof GenericContainerScreen){
+            ScreenHandler screenHandler = ((GenericContainerScreen) client.currentScreen).getScreenHandler();
+            if(screenHandler instanceof GenericContainerScreenHandler) return true;
         }
         return targetMenuClass.isInstance(client.currentScreen);
     }
@@ -44,7 +51,7 @@ public class ContainerHelper {
         var client = MinecraftClient.getInstance();
         var player = client.player;
 
-        if (player != null) {
+        if (player != null && targetMenuClass != null) {
             /// 如果当前有打开的容器，先关闭
             if (isContainerOpen()) {
                 closeContainer();

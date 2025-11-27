@@ -93,8 +93,8 @@ public class LynxJsonHandler {
             typeSection = Arrays.asList(type.split("_",2));
             var actionMove =  typeSection.get(1);
             switch (actionMove){
-                case "STOP_BARITONE" ->{
-                    return new TypeToken<StopBaritoneAction>(){};
+                case "STOP_ATASK" ->{
+                    return new TypeToken<PlayerStopATaskAction>(){};
                 }
                 case "MOVE" -> {
                     return new TypeToken<PlayerMoveAction>(){};
