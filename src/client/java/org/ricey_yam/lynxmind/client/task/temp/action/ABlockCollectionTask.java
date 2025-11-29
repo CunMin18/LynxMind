@@ -77,7 +77,6 @@ public class ABlockCollectionTask extends ATask {
     @Override
     public void tick() {
         try{
-            var player = ClientUtils.getPlayer();
 
             /// 先检查任务状态是否正常
             if (currentTaskState != TaskState.IDLE) {
@@ -301,13 +300,6 @@ public class ABlockCollectionTask extends ATask {
         if (pos == null) return false;
         double maxReach = baritone.getPlayerContext().playerController().getBlockReachDistance();
         return RotationUtils.reachable(baritone.getPlayerContext(), pos, maxReach, false).isPresent();
-    }
-
-    /// 方块被挖掘
-    private boolean isBlockGone(BlockPos pos) {
-        if (pos == null) return true;
-        var state = BlockUtils.getBlockState(pos);
-        return state == null || state.isAir();
     }
 
     /// 更新收集名单

@@ -308,7 +308,6 @@ public class ACraftingTask extends ATask {
 
     /// 是否能够到工作台
     private boolean isCraftingTableInRange(){
-        var player = getPlayer();
         if(craftingTablePos == null) return false;
         return baritone.getPlayerContext().player().getPos().distanceTo(craftingTablePos.toCenterPos()) < 3D;
     }
@@ -531,7 +530,6 @@ public class ACraftingTask extends ATask {
         /// 工作台放置点在合适范围内
         private boolean isCTPlacingPointInRange(){
             var baritone = parentTask.getBaritone();
-            var player = ClientUtils.getPlayer();
             if(cTPlacingPointPos == null) return false;
             return baritone.getPlayerContext().player().getPos().distanceTo(cTPlacingPointPos.toCenterPos()) < 3D;
         }

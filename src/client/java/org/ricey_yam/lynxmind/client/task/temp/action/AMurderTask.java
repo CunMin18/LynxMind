@@ -79,16 +79,6 @@ public class AMurderTask extends ATask {
         getPathingSubTask().disable();
     }
 
-    /// 获取攻击目标
-    private LivingEntity getPathingTarget(){
-        var pathingTarget = EntityUtils.findNearestEntity(getPlayer(), LivingEntity.class,15,e -> murderTargetUUIDs.contains(e.getUuid()));
-        if(pathingTarget == null){
-            pathingTarget = EntityUtils.findNearestEntity(getPlayer(), LivingEntity.class,50,e -> murderTargetUUIDs.contains(e.getUuid()));
-            if(pathingTarget == null) pathingTarget = EntityUtils.getEntityByUUID(murderTargetUUIDs.get(0));
-        }
-        return pathingTarget;
-    }
-
     /// 处理UUID列表,筛选出有效实体的UUID
     private List<UUID> filterToEntityWhichCanMurder(List<UUID> murderTargetUUIDs){
         var result = new ArrayList<UUID>();

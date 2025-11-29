@@ -60,6 +60,7 @@ public class AEntityCollectionTask extends ATask {
             this.autoStrikeBackTask = new LAutoStrikeBackTask(5,10);
             LynxMindEndTickEventManager.registerTask(this.autoStrikeBackTask);
         }
+        this.linkedAction = linkedAction;
     }
     @Override
     public void start() {
