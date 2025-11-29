@@ -4,8 +4,6 @@ import lombok.Getter;
 import lombok.Setter;
 import net.minecraft.util.math.BlockPos;
 
-import java.util.List;
-
 @Getter
 @Setter
 public class BlockLite {

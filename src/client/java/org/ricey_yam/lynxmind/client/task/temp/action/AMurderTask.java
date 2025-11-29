@@ -5,7 +5,7 @@ import lombok.Getter;
 import lombok.Setter;
 import net.minecraft.entity.LivingEntity;
 import org.ricey_yam.lynxmind.client.LynxMindClient;
-import org.ricey_yam.lynxmind.client.ai.message.action.Action;
+import org.ricey_yam.lynxmind.client.module.ai.message.action.Action;
 import org.ricey_yam.lynxmind.client.utils.game_ext.entity.EntityUtils;
 
 import java.util.ArrayList;
@@ -28,7 +28,6 @@ public class AMurderTask extends ATask {
     public void start() {
         this.currentTaskState = TaskState.IDLE;
     }
-
     @Override
     public void tick() {
         if(murderTargetUUIDs.isEmpty()){

@@ -5,7 +5,7 @@ import lombok.Getter;
 import lombok.Setter;
 import net.minecraft.util.math.BlockPos;
 import org.ricey_yam.lynxmind.client.LynxMindClient;
-import org.ricey_yam.lynxmind.client.ai.message.action.Action;
+import org.ricey_yam.lynxmind.client.module.ai.message.action.Action;
 import org.ricey_yam.lynxmind.client.utils.game_ext.interaction.ContainerHelper;
 
 @Getter

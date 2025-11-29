@@ -52,6 +52,9 @@ dependencies {
     implementation 'org.yaml:snakeyaml:2.2'
     implementation 'com.fasterxml.jackson.core:jackson-databind:2.15.3'
     implementation "dev.babbaj:nether-pathfinder:1.4.1"
+    implementation 'com.volcengine:volcengine-java-sdk-ark-runtime:0.2.48'
+    implementation 'org.bouncycastle:bcprov-jdk18on:1.78.1'
+    include 'org.bouncycastle:bcprov-jdk18on:1.78.1'
     compileOnly 'org.projectlombok:lombok:1.18.42'
     annotationProcessor 'org.projectlombok:lombok:1.18.42'
 }

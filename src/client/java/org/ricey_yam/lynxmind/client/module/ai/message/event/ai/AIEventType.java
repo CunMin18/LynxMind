@@ -1,0 +1,14 @@
+package org.ricey_yam.lynxmind.client.module.ai.message.event.ai;
+
+public enum AIEventType {
+    NONE,
+    EVENT_AI_START,
+    EVENT_AI_STOP,
+    EVENT_AI_GET_STATUS,
+    EVENT_AI_CONTROL,
+    EVENT_AI_GET_NEARBY_BLOCK,
+    EVENT_AI_GET_NEARBY_ENTITY,
+    EVENT_AI_ADD_STRIKE_BACK_TARGET,
+    EVENT_AI_REMOVE_STRIKE_BACK_TARGET,
+    EVENT_AI_GET_STRIKE_BACK_TARGET_LIST,
+}

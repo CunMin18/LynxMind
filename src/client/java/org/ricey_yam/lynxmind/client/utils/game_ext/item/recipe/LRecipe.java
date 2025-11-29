@@ -13,8 +13,8 @@ import org.ricey_yam.lynxmind.client.utils.game_ext.item.SlotItemStack;
 import org.ricey_yam.lynxmind.client.utils.game_ext.slot.CraftingTableItemSlot;
 import org.ricey_yam.lynxmind.client.utils.game_ext.slot.InventoryCraftingSlot;
 import org.ricey_yam.lynxmind.client.utils.game_ext.slot.LSlotType;
-import static org.ricey_yam.lynxmind.client.task.non_temp.lynx.sub.LFunctionHubTask.ClickSlotHostSubTask.*;
-import static org.ricey_yam.lynxmind.client.task.non_temp.lynx.sub.LFunctionHubTask.ClickSlotHostSubTask.ClickSlotTinyTask.*;
+import static org.ricey_yam.lynxmind.client.task.non_temp.life.sub.LFunctionHubTask.ClickSlotHostSubTask.*;
+import static org.ricey_yam.lynxmind.client.task.non_temp.life.sub.LFunctionHubTask.ClickSlotHostSubTask.ClickSlotTinyTask.*;
 
 import java.util.ArrayList;
 import java.util.List;

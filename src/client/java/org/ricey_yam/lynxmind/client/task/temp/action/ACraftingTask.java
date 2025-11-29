@@ -11,12 +11,12 @@ import net.minecraft.entity.ItemEntity;
 import net.minecraft.screen.slot.SlotActionType;
 import net.minecraft.util.math.BlockPos;
 import org.ricey_yam.lynxmind.client.LynxMindClient;
-import org.ricey_yam.lynxmind.client.ai.AIServiceManager;
-import org.ricey_yam.lynxmind.client.ai.ChatManager;
-import org.ricey_yam.lynxmind.client.ai.LynxJsonHandler;
-import org.ricey_yam.lynxmind.client.ai.message.action.Action;
-import org.ricey_yam.lynxmind.client.ai.message.action.sub.PlayerCraftingAction;
-import org.ricey_yam.lynxmind.client.ai.message.event.player.sub.PlayerATaskStop;
+import org.ricey_yam.lynxmind.client.module.ai.service.AIServiceManager;
+import org.ricey_yam.lynxmind.client.module.ai.message.AIChatManager;
+import org.ricey_yam.lynxmind.client.module.ai.message.AIJsonHandler;
+import org.ricey_yam.lynxmind.client.module.ai.message.action.Action;
+import org.ricey_yam.lynxmind.client.module.ai.message.action.sub.PlayerCraftingAction;
+import org.ricey_yam.lynxmind.client.module.ai.message.event.player.sub.PlayerATaskStop;
 import org.ricey_yam.lynxmind.client.utils.game_ext.block.BlockUtils;
 import org.ricey_yam.lynxmind.client.utils.game_ext.entity.EntityUtils;
 import org.ricey_yam.lynxmind.client.utils.game_ext.item.ItemStackLite;
@@ -27,9 +27,9 @@ import org.ricey_yam.lynxmind.client.utils.game_ext.interaction.ContainerHelper;
 import org.ricey_yam.lynxmind.client.utils.game_ext.item.ItemUtils;
 import org.ricey_yam.lynxmind.client.utils.game_ext.item.recipe.LRecipe;
 import org.ricey_yam.lynxmind.client.utils.game_ext.slot.*;
-import static org.ricey_yam.lynxmind.client.task.non_temp.lynx.sub.LFunctionHubTask.*;
-import static org.ricey_yam.lynxmind.client.task.non_temp.lynx.sub.LFunctionHubTask.ClickSlotHostSubTask.*;
-import static org.ricey_yam.lynxmind.client.task.non_temp.lynx.sub.LFunctionHubTask.ClickSlotHostSubTask.ClickSlotTinyTask.*;
+import static org.ricey_yam.lynxmind.client.task.non_temp.life.sub.LFunctionHubTask.*;
+import static org.ricey_yam.lynxmind.client.task.non_temp.life.sub.LFunctionHubTask.ClickSlotHostSubTask.*;
+import static org.ricey_yam.lynxmind.client.task.non_temp.life.sub.LFunctionHubTask.ClickSlotHostSubTask.ClickSlotTinyTask.*;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -143,14 +143,14 @@ public class ACraftingTask extends ATask {
 
     @Override
     protected void sendATaskStopMessage(String stopReason) {
-        if(stopReason != null && !stopReason.isEmpty() && AIServiceManager.isServiceActive && AIServiceManager.isTaskActive() && linkedAction != null){
+        if(stopReason != null && !stopReason.isEmpty() && AIServiceManager.isServiceActive() && AIServiceManager.isTaskActive() && linkedAction != null){
             if(linkedAction instanceof PlayerCraftingAction createAction){
                 createAction.setCraft_failed(craft_failed);
                 createAction.setCraft_success(craft_success);
             }
             var bTaskStopEvent = new PlayerATaskStop(linkedAction,stopReason);
-            var serialized = LynxJsonHandler.serialize(bTaskStopEvent);
-            Objects.requireNonNull(AIServiceManager.sendAndReceiveReplyAsync(serialized)).whenComplete((reply, error) -> ChatManager.handleAIReply(reply));
+            var serialized = AIJsonHandler.serialize(bTaskStopEvent);
+            Objects.requireNonNull(AIServiceManager.sendMessageAndReceiveReplyAsync(serialized)).whenComplete((reply, error) -> AIChatManager.handleAIReply(reply));
         }
     }
 

@@ -3,14 +3,14 @@ package org.ricey_yam.lynxmind.client.task.temp.action;
 import baritone.api.IBaritone;
 import lombok.Getter;
 import lombok.Setter;
-import org.ricey_yam.lynxmind.client.ai.AIServiceManager;
-import org.ricey_yam.lynxmind.client.ai.ChatManager;
-import org.ricey_yam.lynxmind.client.ai.LynxJsonHandler;
-import org.ricey_yam.lynxmind.client.ai.message.action.Action;
-import org.ricey_yam.lynxmind.client.ai.message.event.player.sub.PlayerATaskStop;
-import org.ricey_yam.lynxmind.client.baritone.BaritoneManager;
+import org.ricey_yam.lynxmind.client.module.ai.service.AIServiceManager;
+import org.ricey_yam.lynxmind.client.module.ai.message.AIChatManager;
+import org.ricey_yam.lynxmind.client.module.ai.message.AIJsonHandler;
+import org.ricey_yam.lynxmind.client.module.ai.message.action.Action;
+import org.ricey_yam.lynxmind.client.module.ai.message.event.player.sub.PlayerATaskStop;
+import org.ricey_yam.lynxmind.client.module.pathing.BaritoneManager;
 import org.ricey_yam.lynxmind.client.task.temp.TempTask;
-import static org.ricey_yam.lynxmind.client.task.non_temp.lynx.sub.LFunctionHubTask.*;
+import static org.ricey_yam.lynxmind.client.task.non_temp.life.sub.LFunctionHubTask.*;
 
 import java.util.Objects;
 
@@ -26,10 +26,10 @@ public abstract class ATask extends TempTask<ATaskType> {
 
     /// 发送任务停止事件给AI
     protected void sendATaskStopMessage(String stopReason){
-        if(stopReason != null && !stopReason.isEmpty() && AIServiceManager.isServiceActive && AIServiceManager.isTaskActive() && linkedAction != null){
+        if(stopReason != null && !stopReason.isEmpty() && AIServiceManager.isServiceActive() && AIServiceManager.isTaskActive() && linkedAction != null){
             var bTaskStopEvent = new PlayerATaskStop(linkedAction,stopReason);
-            var serialized = LynxJsonHandler.serialize(bTaskStopEvent);
-            Objects.requireNonNull(AIServiceManager.sendAndReceiveReplyAsync(serialized)).whenComplete((reply, error) -> ChatManager.handleAIReply(reply));
+            var serialized = AIJsonHandler.serialize(bTaskStopEvent);
+            Objects.requireNonNull(AIServiceManager.sendMessageAndReceiveReplyAsync(serialized)).whenComplete((reply, error) -> AIChatManager.handleAIReply(reply));
         }
     }
 

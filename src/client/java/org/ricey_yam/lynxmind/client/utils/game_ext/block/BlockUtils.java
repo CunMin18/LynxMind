@@ -9,11 +9,7 @@ import net.minecraft.item.*;
 import net.minecraft.registry.Registries;
 import net.minecraft.registry.tag.BlockTags;
 import net.minecraft.util.Identifier;
-import net.minecraft.util.hit.BlockHitResult;
-import net.minecraft.util.hit.HitResult;
 import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.Vec3d;
-import net.minecraft.world.RaycastContext;
 import org.ricey_yam.lynxmind.client.utils.game_ext.ClientUtils;
 
 import java.util.*;
@@ -124,6 +120,13 @@ public class BlockUtils {
         return blockId.toString();
     }
 
+    /// 是否为有效的方块ID
+    public static boolean isValidBlockID(String blockID){
+        if (blockID == null || blockID.isEmpty()) return false;
+        return Registries.BLOCK.containsId(new Identifier(blockID));
+    }
+
+    /// 是否一定要镐子挖掘(石头类居多)
     public static boolean isPickaxeRequired(BlockState blockState) {
         return blockState.isIn(BlockTags.PICKAXE_MINEABLE);
     }

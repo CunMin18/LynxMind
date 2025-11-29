@@ -10,7 +10,7 @@ import net.minecraft.item.ItemStack;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.World;
 import org.ricey_yam.lynxmind.client.LynxMindClient;
-import org.ricey_yam.lynxmind.client.ai.message.action.Action;
+import org.ricey_yam.lynxmind.client.module.ai.message.action.Action;
 import org.ricey_yam.lynxmind.client.utils.game_ext.item.ItemStackLite;
 import org.ricey_yam.lynxmind.client.utils.game_ext.block.BlockUtils;
 import org.ricey_yam.lynxmind.client.utils.game_ext.ClientUtils;
@@ -23,6 +23,7 @@ import org.ricey_yam.lynxmind.client.utils.game_ext.item.ItemUtils;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicInteger;
 
 @Getter
 @Setter
@@ -42,7 +43,6 @@ public class ABlockCollectionTask extends ATask {
     /// 重新寻找次数
     private int re_pathTicks;
 
-    private String bestToolID;
     private boolean toolInHotbar;
 
     public enum CollectingState {
@@ -82,19 +82,6 @@ public class ABlockCollectionTask extends ATask {
             /// 先检查任务状态是否正常
             if (currentTaskState != TaskState.IDLE) {
                 stop("任务状态不对！");
-                return;
-            }
-
-            /// 检查目标是否存在
-            if(currentTargetBlockPos == null){
-                nextBlock();
-                return;
-            }
-
-            /// 检查目标是否正常
-            var targetBlock = BlockUtils.getTargetBlock(currentTargetBlockPos);
-            if(targetBlock == null || targetBlock.getDefaultState().isAir()) {
-                nextBlock();
                 return;
             }
 
@@ -167,15 +154,29 @@ public class ABlockCollectionTask extends ATask {
         }
     }
     private void movingToBlockTick(){
-        var distanceToTargetBlock = TransformUtils.getDistance(getPlayer().getBlockPos(),currentTargetBlockPos);
+        var distanceToTargetBlock = currentTargetBlockPos != null ? TransformUtils.getDistance(getPlayer().getBlockPos(),currentTargetBlockPos) : 999;
 
         getMineSubTask().disable();
 
         /// 寻找是否有需要的物品的掉落物
-        var nearestLootEntity = EntityUtils.findNearestEntity(getPlayer(),ItemEntity.class,15,ie -> ie.distanceTo(getPlayer()) < distanceToTargetBlock && !ie.getStack().isEmpty() && isNeededBlock(ie.getStack()) && ie.isOnGround());
-        if(nearestLootEntity != null) {
+        var nearestLootEntity = getNearestTargetLootEntity();
+        if(nearestLootEntity != null && (nearestLootEntity.distanceTo(getPlayer()) < distanceToTargetBlock || isEnoughLoot(nearestLootEntity)) && nearestLootEntity.isOnGround()) {
             currentLootTarget = nearestLootEntity;
             transitionToMovingToLoot();
+            return;
+        }
+        else currentLootTarget = null;
+
+        /// 检查目标是否存在
+        if(currentTargetBlockPos == null){
+            nextBlock();
+            return;
+        }
+
+        /// 检查目标是否正常
+        var targetBlock = BlockUtils.getTargetBlock(currentTargetBlockPos);
+        if(targetBlock == null || targetBlock.getDefaultState().isAir()) {
+            nextBlock();
             return;
         }
 
@@ -184,6 +185,7 @@ public class ABlockCollectionTask extends ATask {
             transitionToMiningBlock();
             re_pathTicks = 0;
         }
+
         /// 如果寻路任务未启动 尝试启动
         /// 5秒内找不到路线 则将目标位置拉黑 寻找下一个目标
         else if(!getPathingSubTask().getCustomGoalProcess().isActive() || getPathingSubTask().getCustomGoalProcess().getGoal() == null){
@@ -217,7 +219,7 @@ public class ABlockCollectionTask extends ATask {
         if(ClientUtils.getController().isBreakingBlock()){
             var miningBlockState = BlockUtils.getBlockState(miningBlockPos);
             if(miningBlockState != null && getMineSubTask().isEnabled() && BlockUtils.isPickaxeRequired(miningBlockState)){
-                if(!holdingBestTool(miningBlockPos) && !hasSuitableTool(miningBlockPos)){
+                if(!hasSuitableTool(miningBlockPos) && !holdingBestTool(miningBlockPos)){
                     var miningBlockID = getMineSubTask().getMiningBlockID();
                     stop("背包内没有能够采集 " + miningBlockID + " 的工具!已停止任务!");
                     return;
@@ -273,8 +275,16 @@ public class ABlockCollectionTask extends ATask {
         }
         currentTargetBlockPos = BlockUtils.findNearestBlock(baritone.getPlayerContext().player(), 50,pos -> !blackList.contains(pos) && targetBlockIDList.contains(BlockUtils.getBlockID(pos)));
         if(currentTargetBlockPos == null){
-            stop("附近没有指定方块!");
+            currentLootTarget = getNearestTargetLootEntity();
+            if(currentLootTarget == null) {
+                stop("附近没有指定方块!");
+            }
+            else transitionToMovingToLoot();
         }
+    }
+
+    private ItemEntity getNearestTargetLootEntity(){
+        return EntityUtils.findNearestEntity(getPlayer(),ItemEntity.class,15,ie -> !ie.getStack().isEmpty() && isNeededBlock(ie.getStack()));
     }
 
     /// 玩家靠近方块
@@ -315,14 +325,28 @@ public class ABlockCollectionTask extends ATask {
 
     /// 是否有合适的工具
     private boolean hasSuitableTool(BlockPos targetPos){
-        bestToolID = PlayerUtils.getBestToolIDInInventory(targetPos);
+        var bestToolID = PlayerUtils.getBestToolIDInInventory(targetPos);
         return bestToolID != null && !bestToolID.isEmpty() && !bestToolID.contains("air");
     }
 
     /// 是否握着最佳武器
     private boolean holdingBestTool(BlockPos targetPos){
-        if(!hasSuitableTool(targetPos)) return true;
         var holdingItemStack = PlayerUtils.getHoldingItemStack();
+        var bestToolID = PlayerUtils.getBestToolIDInInventory(targetPos);
         return ItemUtils.getItemID(holdingItemStack).equals(bestToolID);
+    }
+
+    /// 掉落物是否能满足任一物品的收集要求
+    private boolean isEnoughLoot(ItemEntity lootTarget){
+        if(lootTarget == null) return false;
+        for(var item : neededItem){
+            var allStackEntities = EntityUtils.scanAllEntity(getPlayer(),ItemEntity.class,5,ie -> !ie.getStack().isEmpty() && ItemUtils.getItemID(ie.getStack()).equals(item.getItem_name()));
+            var itemCountInTotalAt = new AtomicInteger();
+            allStackEntities.forEach(e -> itemCountInTotalAt.addAndGet(e.getStack().getCount()));
+            if(itemCountInTotalAt.get() >= item.getCount() && item.getItem_name().equals(ItemUtils.getItemID(lootTarget.getStack()))) {
+                return true;
+            }
+        }
+        return false;
     }
 }

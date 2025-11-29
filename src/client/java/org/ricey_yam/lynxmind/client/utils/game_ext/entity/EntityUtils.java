@@ -6,6 +6,7 @@ import net.minecraft.entity.mob.MobEntity;
 import net.minecraft.entity.mob.Monster;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.registry.Registries;
+import net.minecraft.util.Identifier;
 import net.minecraft.util.math.Box;
 import net.minecraft.util.math.Vec3d;
 import org.ricey_yam.lynxmind.client.utils.game_ext.ClientUtils;
@@ -72,6 +73,11 @@ public class EntityUtils {
         if(entity == null) return null;
         var i = Registries.ENTITY_TYPE.getId(entity.getType());
         return i.toString();
+    }
+
+    public static boolean isValidEntityID(String entityID){
+        if (entityID == null || entityID.isEmpty()) return false;
+        return Registries.ENTITY_TYPE.containsId(new Identifier(entityID));
     }
 
     public static LivingEntity getEntityByUUID(UUID uuid){

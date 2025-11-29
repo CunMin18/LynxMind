@@ -3,10 +3,8 @@ package org.ricey_yam.lynxmind.client.event;
 import lombok.Getter;
 import lombok.Setter;
 import org.ricey_yam.lynxmind.client.task.Task;
-import org.ricey_yam.lynxmind.client.task.temp.action.APathingTask;
 
 import java.util.*;
-import java.util.stream.Collectors;
 
 @Getter
 @Setter

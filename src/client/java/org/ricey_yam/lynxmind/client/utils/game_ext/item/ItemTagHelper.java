@@ -47,7 +47,7 @@ public class ItemTagHelper {
                 List.of("minecraft:copper_ore", "minecraft:deepslate_copper_ore", "minecraft:copper_block")
         ));
         blockTagMatchers.add(new TargetBlockTagMatcher(
-                List.of("cobblestone","原石","圆石","原神"),
+                List.of("cobblestone","原石","圆石","原神","stone","石头"),
                 List.of("minecraft:cobblestone", "minecraft:stone")
         ));
 

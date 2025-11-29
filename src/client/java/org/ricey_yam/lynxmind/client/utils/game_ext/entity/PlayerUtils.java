@@ -13,7 +13,7 @@ import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Vec3d;
 import org.ricey_yam.lynxmind.client.utils.game_ext.item.ItemStackLite;
 import org.ricey_yam.lynxmind.client.utils.game_ext.item.SlotItemStack;
-import org.ricey_yam.lynxmind.client.baritone.BaritoneManager;
+import org.ricey_yam.lynxmind.client.module.pathing.BaritoneManager;
 import org.ricey_yam.lynxmind.client.utils.game_ext.block.BlockUtils;
 import org.ricey_yam.lynxmind.client.utils.game_ext.ClientUtils;
 import org.ricey_yam.lynxmind.client.utils.game_ext.TransformUtils;

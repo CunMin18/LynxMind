@@ -25,4 +25,10 @@ public class ItemUtils {
         return 1;
     }
 
+    /// 是否为有效物品ID
+    public static boolean isValidItemId(String itemID) {
+        if (itemID == null || itemID.isEmpty()) return false;
+        return Registries.ITEM.containsId(new Identifier(itemID));
+    }
+
 }

@@ -1,11 +1,11 @@
 package org.ricey_yam.lynxmind.client.event;
 
 import net.minecraft.entity.LivingEntity;
-import org.ricey_yam.lynxmind.client.ai.AIServiceManager;
-import org.ricey_yam.lynxmind.client.ai.ChatManager;
-import org.ricey_yam.lynxmind.client.ai.LynxJsonHandler;
-import org.ricey_yam.lynxmind.client.ai.message.event.player.sub.PlayerPickupItemEvent;
-import org.ricey_yam.lynxmind.client.task.non_temp.lynx.sub.LFunctionHubTask;
+import org.ricey_yam.lynxmind.client.module.ai.service.AIServiceManager;
+import org.ricey_yam.lynxmind.client.module.ai.message.AIChatManager;
+import org.ricey_yam.lynxmind.client.module.ai.message.AIJsonHandler;
+import org.ricey_yam.lynxmind.client.module.ai.message.event.player.sub.PlayerPickupItemEvent;
+import org.ricey_yam.lynxmind.client.task.non_temp.life.sub.LFunctionHubTask;
 import org.ricey_yam.lynxmind.client.task.temp.action.*;
 import org.ricey_yam.lynxmind.client.task.temp.action.AEntityCollectionTask;
 import org.ricey_yam.lynxmind.client.task.temp.action.AMurderTask;
@@ -16,10 +16,10 @@ import java.util.Objects;
 public class LynxMindMixinEvent {
     public static void onPlayerPickupItem(String itemID,int count){
         /// 发送捡起物品状态
-        if(AIServiceManager.isTaskActive() && AIServiceManager.isServiceActive){
+        if(AIServiceManager.isTaskActive() && AIServiceManager.isServiceActive()){
             var playerPickupItemEvent = new PlayerPickupItemEvent(itemID,count);
-            var serialized = LynxJsonHandler.serialize(playerPickupItemEvent);
-            Objects.requireNonNull(AIServiceManager.sendAndReceiveReplyAsync(serialized)).whenComplete((reply, throwable) -> ChatManager.handleAIReply(reply));
+            var serialized = AIJsonHandler.serialize(playerPickupItemEvent);
+            Objects.requireNonNull(AIServiceManager.sendMessageAndReceiveReplyAsync(serialized)).whenComplete((reply, throwable) -> AIChatManager.handleAIReply(reply));
         }
 
         /// 更新ATask收集状态

@@ -1,0 +1,13 @@
+package org.ricey_yam.lynxmind.client.module.ai.message.event.player;
+
+public enum PlayerEventType {
+    NONE,
+    EVENT_PLAYER_CREATE_TASK,
+    EVENT_PLAYER_REMOVE_TASK,
+    EVENT_PLAYER_STATUS_HEARTBEAT,
+    EVENT_PLAYER_PICKUP_ITEM,
+    EVENT_PLAYER_ATASK_STOP,
+    EVENT_PLAYER_SCAN_BLOCK,
+    EVENT_PLAYER_SCAN_ENTITY,
+    EVENT_PLAYER_REPLY_STRIKE_BACK_TARGET_LIST,
+}
