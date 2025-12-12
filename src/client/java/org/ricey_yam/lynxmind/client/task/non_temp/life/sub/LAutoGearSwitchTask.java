@@ -70,7 +70,6 @@ public class LAutoGearSwitchTask extends LTask {
 
     private void switchToSuitableItem(GearType gearType){
         var clickSubTask = getClickControllerSubTask();
-        var baritone = getBaritone();
 
         var targetPos = getMineSubTask().getMiningBlockPos();
         if(targetPos == null && gearType == GearType.TOOL) {

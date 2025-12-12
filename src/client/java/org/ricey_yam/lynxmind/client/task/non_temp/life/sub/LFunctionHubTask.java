@@ -35,7 +35,6 @@ public class LFunctionHubTask extends LTask {
     public static LFunctionHubTask getActiveTask(){
         return (LFunctionHubTask) LTask.getActiveLTask(LTaskType.FUNCTION_HUB, LFunctionHubTask.class);
     }
-
     private List<LFunctionHubSubTask> functionSubTasks = new ArrayList<>();
     private AttackSubTask attackSubTask;
     private PathingSubTask pathingSubTask;

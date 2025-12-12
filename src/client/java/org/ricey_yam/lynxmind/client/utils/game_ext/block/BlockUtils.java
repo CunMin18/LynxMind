@@ -58,7 +58,6 @@ public class BlockUtils {
             for (int y = -radius; y <= radius; y++) {
                 for (int z = -radius; z <= radius; z++) {
                     var pos = entityPos.add(x, y, z);
-                    var blockState = BlockUtils.getBlockState(pos);
                     if(targetBlockIDList.contains(BlockUtils.getBlockID(pos))){
                         result.add(new BlockLite(pos));
                     }
